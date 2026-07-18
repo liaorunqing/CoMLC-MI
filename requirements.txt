@@ -1,0 +1,39 @@
+# CoMLC-MI: Multi-Label Myocardial Infarction Complication Prediction Benchmark
+# Python 3.12
+#
+# To install: pip install -r requirements.txt
+#
+# Note: tabpfn requires Python >= 3.10.
+# For GPU acceleration of PyTorch, adjust the torch index-url according to your CUDA version.
+
+# Core scientific computing
+numpy>=1.26,<2.0
+pandas>=2.0
+scipy>=1.11
+
+# Machine learning frameworks
+scikit-learn==1.9.*
+xgboost>=2.0
+lightgbm==4.6.*
+catboost>=1.2
+
+# Tabular foundation model
+tabpfn>=0.2
+
+# Deep learning
+torch>=2.4,<3.0
+torchvision>=0.19
+torchaudio>=2.4
+
+# SHAP analysis
+shap>=0.44
+
+# Visualization
+matplotlib>=3.8
+seaborn>=0.13
+
+# Parallelization and utilities
+joblib>=1.3
+
+# MICE imputation (via scikit-learn)
+# scikit-learn >= 1.4 includes IterativeImputer with RandomForest estimator
