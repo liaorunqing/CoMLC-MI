@@ -8,8 +8,11 @@
 [![PyTorch 2.6](https://img.shields.io/badge/PyTorch-2.6-red.svg)](https://pytorch.org/)
 [![scikit-learn 1.9](https://img.shields.io/badge/scikit--learn-1.9-orange.svg)](https://scikit-learn.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-liaorunqing%2FCoMLC--MI-lightgrey.svg?logo=github)](https://github.com/liaorunqing/CoMLC-MI.git)
 
 ---
+
+> **Repository:** [https://github.com/liaorunqing/CoMLC-MI](https://github.com/liaorunqing/CoMLC-MI.git)
 
 ## Overview
 
@@ -133,8 +136,8 @@ The dependency metrics serve a diagnostic function: when LDS is low (below ~0.15
 ## Installation
 
 ```bash
-git clone <repo-url>
-cd CoMLC-MI_Final_Submission_new1
+git clone https://github.com/liaorunqing/CoMLC-MI.git
+cd CoMLC-MI
 pip install -r requirements.txt
 ```
 
