@@ -1,0 +1,5 @@
+Configuration,Macro-AUC,Significant labels,Clinical validation,Model selection guidance,Risk of false positives,Key insight
+Full framework,0.7605614000556505,4/12,SHAP confirmed,LDS-based,Controlled (FDR),Best model (TabPFN) identified with statistical confidence
+w/o Dependency Analysis,0.6694,4/12,SHAP confirmed,None (default to XGBoost),Controlled (FDR),Macro-AUC drops from 0.7606 to 0.6694 (+9.1 pp) without LDS-guided selection
+w/o Statistical Validation,0.7605614000556505,Not assessed,SHAP confirmed,LDS-based,HIGH (uncorrected),Original DeLong on macro-AUC scalar gave z=8.27 (false positive); per-label + FDR correctly identifies 4/12 significant labels
+w/o SHAP,0.7605614000556505,4/12,None,LDS-based,Controlled (FDR),Cannot verify that 4/4 expected CHF predictors rank in SHAP top-15; clinical plausibility unvalidated

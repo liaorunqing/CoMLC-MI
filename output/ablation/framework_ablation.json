@@ -1,0 +1,38 @@
+[
+  {
+    "Configuration": "Full framework",
+    "Macro-AUC": 0.7605614000556505,
+    "Significant labels": "4/12",
+    "Clinical validation": "SHAP confirmed",
+    "Model selection guidance": "LDS-based",
+    "Risk of false positives": "Controlled (FDR)",
+    "Key insight": "Best model (TabPFN) identified with statistical confidence"
+  },
+  {
+    "Configuration": "w/o Dependency Analysis",
+    "Macro-AUC": 0.6694,
+    "Significant labels": "4/12",
+    "Clinical validation": "SHAP confirmed",
+    "Model selection guidance": "None (default to XGBoost)",
+    "Risk of false positives": "Controlled (FDR)",
+    "Key insight": "Macro-AUC drops from 0.7606 to 0.6694 (+9.1 pp) without LDS-guided selection"
+  },
+  {
+    "Configuration": "w/o Statistical Validation",
+    "Macro-AUC": 0.7605614000556505,
+    "Significant labels": "Not assessed",
+    "Clinical validation": "SHAP confirmed",
+    "Model selection guidance": "LDS-based",
+    "Risk of false positives": "HIGH (uncorrected)",
+    "Key insight": "Original DeLong on macro-AUC scalar gave z=8.27 (false positive); per-label + FDR correctly identifies 4/12 significant labels"
+  },
+  {
+    "Configuration": "w/o SHAP",
+    "Macro-AUC": 0.7605614000556505,
+    "Significant labels": "4/12",
+    "Clinical validation": "None",
+    "Model selection guidance": "LDS-based",
+    "Risk of false positives": "Controlled (FDR)",
+    "Key insight": "Cannot verify that 4/4 expected CHF predictors rank in SHAP top-15; clinical plausibility unvalidated"
+  }
+]

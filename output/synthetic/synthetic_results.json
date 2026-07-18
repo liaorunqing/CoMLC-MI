@@ -1,0 +1,243 @@
+{
+  "config": {
+    "n_samples": 1000,
+    "n_features": 50,
+    "n_labels": 10,
+    "n_runs": 1,
+    "test_size": 0.3
+  },
+  "dependency_levels": {
+    "Low": 0.05,
+    "Medium": 0.25,
+    "High": 0.5,
+    "Very High": 0.75
+  },
+  "results": {
+    "Low_BR": {
+      "macro_auc_mean": 0.8870520426388195,
+      "macro_auc_std": 0.0,
+      "time_mean": 4.788119000004372
+    },
+    "Low_CC": {
+      "macro_auc_mean": 0.8758882622282608,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.4770370000042021
+    },
+    "Low_ML-KNN": {
+      "macro_auc_mean": 0.7593310911035716,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.16717820000485517
+    },
+    "Low_GCN": {
+      "macro_auc_mean": 0.6259583655290007,
+      "macro_auc_std": 0.0,
+      "time_mean": 1.7504295999824535
+    },
+    "Medium_BR": {
+      "macro_auc_mean": 0.82913765684381,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.44582829999853857
+    },
+    "Medium_CC": {
+      "macro_auc_mean": 0.8112813538948744,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.44053490000078455
+    },
+    "Medium_ML-KNN": {
+      "macro_auc_mean": 0.7206274623818347,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.06920669999090023
+    },
+    "Medium_GCN": {
+      "macro_auc_mean": 0.634990148221421,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.4933409000223037
+    },
+    "High_BR": {
+      "macro_auc_mean": 0.8075838570895474,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.416837900003884
+    },
+    "High_CC": {
+      "macro_auc_mean": 0.7782971111149617,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.4330991000169888
+    },
+    "High_ML-KNN": {
+      "macro_auc_mean": 0.7078978139082975,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.06781420001061633
+    },
+    "High_GCN": {
+      "macro_auc_mean": 0.6157861410796807,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.4884050999826286
+    },
+    "Very High_BR": {
+      "macro_auc_mean": 0.8117358255458355,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.4078688000154216
+    },
+    "Very High_CC": {
+      "macro_auc_mean": 0.7218877155438791,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.4406473000126425
+    },
+    "Very High_ML-KNN": {
+      "macro_auc_mean": 0.6987918689807953,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.0691866000124719
+    },
+    "Very High_GCN": {
+      "macro_auc_mean": 0.7446250833921914,
+      "macro_auc_std": 0.0,
+      "time_mean": 0.4830595999956131
+    }
+  },
+  "summary": [
+    {
+      "Dependency": "Low",
+      "Strength": 0.05,
+      "Model": "BR",
+      "Macro-AUC": "0.8871 \u00b1 0.0000",
+      "Time (s)": "4.8",
+      "Label_Cardinality": 2.674,
+      "LDS": 0.000972365494648442
+    },
+    {
+      "Dependency": "Low",
+      "Strength": 0.05,
+      "Model": "CC",
+      "Macro-AUC": "0.8759 \u00b1 0.0000",
+      "Time (s)": "0.5",
+      "Label_Cardinality": 2.674,
+      "LDS": 0.000972365494648442
+    },
+    {
+      "Dependency": "Low",
+      "Strength": 0.05,
+      "Model": "ML-KNN",
+      "Macro-AUC": "0.7593 \u00b1 0.0000",
+      "Time (s)": "0.2",
+      "Label_Cardinality": 2.674,
+      "LDS": 0.000972365494648442
+    },
+    {
+      "Dependency": "Low",
+      "Strength": 0.05,
+      "Model": "GCN",
+      "Macro-AUC": "0.6260 \u00b1 0.0000",
+      "Time (s)": "1.8",
+      "Label_Cardinality": 2.674,
+      "LDS": 0.000972365494648442
+    },
+    {
+      "Dependency": "Medium",
+      "Strength": 0.25,
+      "Model": "BR",
+      "Macro-AUC": "0.8291 \u00b1 0.0000",
+      "Time (s)": "0.4",
+      "Label_Cardinality": 2.899,
+      "LDS": 0.0010501480209205826
+    },
+    {
+      "Dependency": "Medium",
+      "Strength": 0.25,
+      "Model": "CC",
+      "Macro-AUC": "0.8113 \u00b1 0.0000",
+      "Time (s)": "0.4",
+      "Label_Cardinality": 2.899,
+      "LDS": 0.0010501480209205826
+    },
+    {
+      "Dependency": "Medium",
+      "Strength": 0.25,
+      "Model": "ML-KNN",
+      "Macro-AUC": "0.7206 \u00b1 0.0000",
+      "Time (s)": "0.1",
+      "Label_Cardinality": 2.899,
+      "LDS": 0.0010501480209205826
+    },
+    {
+      "Dependency": "Medium",
+      "Strength": 0.25,
+      "Model": "GCN",
+      "Macro-AUC": "0.6350 \u00b1 0.0000",
+      "Time (s)": "0.5",
+      "Label_Cardinality": 2.899,
+      "LDS": 0.0010501480209205826
+    },
+    {
+      "Dependency": "High",
+      "Strength": 0.5,
+      "Model": "BR",
+      "Macro-AUC": "0.8076 \u00b1 0.0000",
+      "Time (s)": "0.4",
+      "Label_Cardinality": 2.975,
+      "LDS": 0.0010765468300947142
+    },
+    {
+      "Dependency": "High",
+      "Strength": 0.5,
+      "Model": "CC",
+      "Macro-AUC": "0.7783 \u00b1 0.0000",
+      "Time (s)": "0.4",
+      "Label_Cardinality": 2.975,
+      "LDS": 0.0010765468300947142
+    },
+    {
+      "Dependency": "High",
+      "Strength": 0.5,
+      "Model": "ML-KNN",
+      "Macro-AUC": "0.7079 \u00b1 0.0000",
+      "Time (s)": "0.1",
+      "Label_Cardinality": 2.975,
+      "LDS": 0.0010765468300947142
+    },
+    {
+      "Dependency": "High",
+      "Strength": 0.5,
+      "Model": "GCN",
+      "Macro-AUC": "0.6158 \u00b1 0.0000",
+      "Time (s)": "0.5",
+      "Label_Cardinality": 2.975,
+      "LDS": 0.0010765468300947142
+    },
+    {
+      "Dependency": "Very High",
+      "Strength": 0.75,
+      "Model": "BR",
+      "Macro-AUC": "0.8117 \u00b1 0.0000",
+      "Time (s)": "0.4",
+      "Label_Cardinality": 3.123,
+      "LDS": 0.0016231002284360105
+    },
+    {
+      "Dependency": "Very High",
+      "Strength": 0.75,
+      "Model": "CC",
+      "Macro-AUC": "0.7219 \u00b1 0.0000",
+      "Time (s)": "0.4",
+      "Label_Cardinality": 3.123,
+      "LDS": 0.0016231002284360105
+    },
+    {
+      "Dependency": "Very High",
+      "Strength": 0.75,
+      "Model": "ML-KNN",
+      "Macro-AUC": "0.6988 \u00b1 0.0000",
+      "Time (s)": "0.1",
+      "Label_Cardinality": 3.123,
+      "LDS": 0.0016231002284360105
+    },
+    {
+      "Dependency": "Very High",
+      "Strength": 0.75,
+      "Model": "GCN",
+      "Macro-AUC": "0.7446 \u00b1 0.0000",
+      "Time (s)": "0.5",
+      "Label_Cardinality": 3.123,
+      "LDS": 0.0016231002284360105
+    }
+  ]
+}

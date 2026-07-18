@@ -1,0 +1,49 @@
+{
+  "BR (LightGBM)": {
+    "train_time_s": 7.9,
+    "infer_time_s": 0.02
+  },
+  "CC (single)": {
+    "train_time_s": 1.0,
+    "infer_time_s": 0.04
+  },
+  "ECC (50 chains)": {
+    "train_time_s": 51.7,
+    "infer_time_s": 2.11,
+    "note": "ECC = 50 parallel chains (wall-clock ~24s with joblib.Parallel)"
+  },
+  "LP-RF": {
+    "train_time_s": 0.3,
+    "infer_time_s": 0.0
+  },
+  "TabPFN v2-BR": {
+    "train_time_s": "~120",
+    "infer_time_s": "~30",
+    "note": "In-context learning (single forward pass), CPU, 12 labels x ~10s each"
+  },
+  "CatBoost-BR": {
+    "train_time_s": 18.8,
+    "infer_time_s": 0.02,
+    "note": "Per-label training, 12 labels"
+  },
+  "GCN (Shared-Encoder MLP)": {
+    "train_time_s": "~180",
+    "infer_time_s": "~0.5",
+    "note": "100 epochs on CPU, 3-layer MLP + 2-layer GCN"
+  },
+  "_theoretical": {
+    "BR": "$O(L \\cdot T)$",
+    "CC": "$O(L^2 \\cdot T)$",
+    "LP": "$O(2^L \\cdot T)$ (worst case)",
+    "RAkEL": "$O(m \\cdot 2^k \\cdot T)$",
+    "GCN": "$O(E \\cdot H^2 + N \\cdot F \\cdot H)$",
+    "TabPFN": "$O(N^2 \\cdot F)$",
+    "MLP": "$O(N \\cdot F \\cdot H)$",
+    "L": "number of labels",
+    "T": "tree complexity",
+    "E": "number of edges in label graph",
+    "H": "hidden dimension",
+    "F": "number of features",
+    "N": "number of samples"
+  }
+}

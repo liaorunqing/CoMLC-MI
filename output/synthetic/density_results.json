@@ -1,0 +1,114 @@
+{
+  "results": {
+    "Sparse (LD\u22480.05)_BR": 0.5501858736059478,
+    "Sparse (LD\u22480.05)_CC": 0.5050185873605948,
+    "Sparse (LD\u22480.05)_ML-KNN": 0.48614941839549103,
+    "Sparse (LD\u22480.05)_GCN": 0.4549706199784147,
+    "Medium (LD\u22480.15)_BR": 0.5191668235146496,
+    "Medium (LD\u22480.15)_CC": 0.5019166823514649,
+    "Medium (LD\u22480.15)_ML-KNN": 0.4812723508375682,
+    "Medium (LD\u22480.15)_GCN": 0.5098186837317272,
+    "Dense (LD\u22480.35)_BR": 0.44140713540958343,
+    "Dense (LD\u22480.35)_CC": 0.4941407135409584,
+    "Dense (LD\u22480.35)_ML-KNN": 0.46679359898454137,
+    "Dense (LD\u22480.35)_GCN": 0.42567659458724344
+  },
+  "summary": [
+    {
+      "Density": "Sparse",
+      "Model": "BR",
+      "Macro-AUC": "0.5502",
+      "LDS": "0.001",
+      "LD": "0.100",
+      "LC": "1.00"
+    },
+    {
+      "Density": "Sparse",
+      "Model": "CC",
+      "Macro-AUC": "0.5050",
+      "LDS": "0.001",
+      "LD": "0.100",
+      "LC": "1.00"
+    },
+    {
+      "Density": "Sparse",
+      "Model": "ML-KNN",
+      "Macro-AUC": "0.4861",
+      "LDS": "0.001",
+      "LD": "0.100",
+      "LC": "1.00"
+    },
+    {
+      "Density": "Sparse",
+      "Model": "GCN",
+      "Macro-AUC": "0.4550",
+      "LDS": "0.001",
+      "LD": "0.100",
+      "LC": "1.00"
+    },
+    {
+      "Density": "Medium",
+      "Model": "BR",
+      "Macro-AUC": "0.5192",
+      "LDS": "0.001",
+      "LD": "0.200",
+      "LC": "2.00"
+    },
+    {
+      "Density": "Medium",
+      "Model": "CC",
+      "Macro-AUC": "0.5019",
+      "LDS": "0.001",
+      "LD": "0.200",
+      "LC": "2.00"
+    },
+    {
+      "Density": "Medium",
+      "Model": "ML-KNN",
+      "Macro-AUC": "0.4813",
+      "LDS": "0.001",
+      "LD": "0.200",
+      "LC": "2.00"
+    },
+    {
+      "Density": "Medium",
+      "Model": "GCN",
+      "Macro-AUC": "0.5098",
+      "LDS": "0.001",
+      "LD": "0.200",
+      "LC": "2.00"
+    },
+    {
+      "Density": "Dense",
+      "Model": "BR",
+      "Macro-AUC": "0.4414",
+      "LDS": "0.001",
+      "LD": "0.400",
+      "LC": "4.00"
+    },
+    {
+      "Density": "Dense",
+      "Model": "CC",
+      "Macro-AUC": "0.4941",
+      "LDS": "0.001",
+      "LD": "0.400",
+      "LC": "4.00"
+    },
+    {
+      "Density": "Dense",
+      "Model": "ML-KNN",
+      "Macro-AUC": "0.4668",
+      "LDS": "0.001",
+      "LD": "0.400",
+      "LC": "4.00"
+    },
+    {
+      "Density": "Dense",
+      "Model": "GCN",
+      "Macro-AUC": "0.4257",
+      "LDS": "0.001",
+      "LD": "0.400",
+      "LC": "4.00"
+    }
+  ]
+}
