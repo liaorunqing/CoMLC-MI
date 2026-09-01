@@ -1,0 +1,13 @@
+source_field,clinical_label,positive_code,operational_target,timing_interpretation_caveat
+FIBR_PREDS,Atrial fibrillation,1,Recorded hospitalization complication,No onset timestamp; prevalent and incident events cannot be separated
+PREDS_TAH,Supraventricular tachycardia,1,Recorded hospitalization complication,Rare endpoint; no onset timestamp
+JELUD_TAH,Ventricular tachycardia,1,Recorded hospitalization complication,No onset timestamp
+FIBR_JELUD,Ventricular fibrillation,1,Recorded hospitalization complication,No onset timestamp
+A_V_BLOK,Third-degree AV block,1,Recorded hospitalization complication,No onset timestamp
+OTEK_LANC,Pulmonary edema,1,Recorded hospitalization complication,No onset timestamp; may overlap a lethal-cause code
+RAZRIV,Myocardial rupture,1,Recorded hospitalization complication,No onset timestamp; may overlap a lethal-cause code
+DRESSLER,Dressler syndrome,1,Recorded hospitalization complication,May manifest after the early inpatient window
+ZSN,Chronic heart failure outcome,1,Recorded hospitalization complication,Distinct field from baseline HF history but clinically overlapping; no onset timestamp
+REC_IM,Recurrent myocardial infarction,1,Recorded hospitalization complication,No onset timestamp
+P_IM_STEN,Post-infarction angina,1,Recorded hospitalization complication,May manifest beyond the earliest observation window
+LET_IS,Fatal outcome,1--7,Any nonzero coded lethal cause,"Cause code, not a time-to-event field; zero means no coded lethal cause"

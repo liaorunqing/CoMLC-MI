@@ -1,0 +1,11 @@
+{
+  "scope": "Prospective feature-horizon sensitivity analysis of one shared MLP baseline.",
+  "feature_counts": {
+    "Admission": 91,
+    "24 h": 94,
+    "48 h": 97,
+    "72 h": 100
+  },
+  "validation": "5 repeats x 5 outer folds; four inner folds select epochs.",
+  "warning": "Later horizons are accumulated-information risk stratification and may contain downstream care information."
+}

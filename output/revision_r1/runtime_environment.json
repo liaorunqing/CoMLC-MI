@@ -1,0 +1,22 @@
+{
+  "python": "3.12.3 | packaged by conda-forge | (main, Apr 15 2024, 18:20:11) [MSC v.1938 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "packages": {
+    "numpy": "2.5.2",
+    "pandas": "2.3.3",
+    "scipy": "1.17.1",
+    "scikit-learn": "1.7.2",
+    "scikit-multilearn": "0.2.0",
+    "xgboost": "3.0.2",
+    "lightgbm": "4.6.0",
+    "catboost": "1.2.8",
+    "tabpfn": "8.0.1",
+    "torch": "2.9.1+cpu",
+    "torch-geometric": "2.8.0",
+    "matplotlib": "3.11.0",
+    "seaborn": "0.13.2",
+    "joblib": "1.5.3"
+  },
+  "config": "configs/access_2026_35668_r1.json",
+  "config_sha256": "4d57f46701d7789b92ef01ac9f7f2d5e2822e3b1f8c1d142128aa30d89a65257"
+}

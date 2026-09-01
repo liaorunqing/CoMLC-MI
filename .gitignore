@@ -1,0 +1,18 @@
+# Patient-level external data must never be published.
+local_data/
+*Hungarian Myocardial Infarction Registry*.xlsx
+
+# Reproducible generated artifacts and caches.
+__pycache__/
+.pytest_cache/
+*.pyc
+tmp/
+output/revision_r1/checkpoints/
+output/revision_r1/external_transportability/external_transportability_predictions.npz
+
+# Local LaTeX build products.
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz

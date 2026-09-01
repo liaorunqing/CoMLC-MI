@@ -1,541 +1,410 @@
 #!/usr/bin/env python3
-"""
-=============================================================================
-CoMLC-MI: Synthetic Label Dependency Experiment
-=============================================================================
-Generates synthetic multi-label data with controlled label dependency levels
-to validate the hypothesis: GCN only provides benefit when label dependency
-is sufficiently strong.
+"""Controlled synthetic experiments for label-dependency sensitivity.
 
-Dependency levels are controlled via a latent factor model:
-  P(y_j=1 | x, z) = sigma(w_j·x + alpha * z_j + epsilon)
-where z_j is a shared latent component and alpha controls dependency strength.
+The generator changes only the correlation of Gaussian residuals across labels.
+For a given run, the feature matrix, label-specific feature weights, residual
+draws, marginal prevalences, and train/validation/test indices are reused at
+every dependency setting. The input ``rho`` is a data-generating parameter,
+not an LDS value; reported dependency is always measured from binary labels.
 
 Usage:
-  python synthetic_experiments.py
-=============================================================================
+    python src/synthetic_experiments.py --runs 10
+    python src/synthetic_experiments.py --quick
 """
-import numpy as np
-import pandas as pd
+
+from __future__ import annotations
+
+import argparse
+import hashlib
 import json
 import os
 import time
 import warnings
-warnings.filterwarnings('ignore')
+from dataclasses import dataclass
+from pathlib import Path
 
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score
-from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import StandardScaler
 import lightgbm as lgb
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from sklearn.metrics import roc_auc_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
 
-# Paths
+try:
+    from .label_metrics import label_space_metrics
+except ImportError:  # direct-script compatibility
+    from label_metrics import label_space_metrics
+
+warnings.filterwarnings("ignore")
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
-OUTPUT_DIR = os.path.join(PROJECT_DIR, 'output', 'synthetic')
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-
+OUTPUT_DIR = os.path.join(PROJECT_DIR, "output", "synthetic_controlled")
 RANDOM_SEED = 42
-np.random.seed(RANDOM_SEED)
-torch.manual_seed(RANDOM_SEED)
+MODEL_NAMES = ("BR", "CC", "ML-KNN", "GCN")
 
-# =============================================================================
-# Synthetic Data Generator
-# =============================================================================
+
+@dataclass(frozen=True)
+class SyntheticDesign:
+    n_samples: int = 1000
+    n_features: int = 50
+    n_labels: int = 10
+    n_informative: int = 15
+    prevalence: float = 0.10
+    feature_signal: float = 0.65
+
+
+def _standardize_columns(values: np.ndarray) -> np.ndarray:
+    centered = values - values.mean(axis=0, keepdims=True)
+    scale = centered.std(axis=0, keepdims=True)
+    return centered / np.where(scale == 0, 1.0, scale)
+
+
+def _fixed_split_indices(n_samples: int, seed: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    rng = np.random.default_rng(seed)
+    order = rng.permutation(n_samples)
+    n_train = int(0.70 * n_samples)
+    n_val = int(0.15 * n_samples)
+    return order[:n_train], order[n_train:n_train + n_val], order[n_train + n_val:]
+
 
 def generate_synthetic_multilabel(
-    n_samples=1000,
-    n_features=50,
-    n_labels=10,
-    dependency_strength=0.3,
-    n_informative=15,
-    random_state=42,
-):
+    design: SyntheticDesign,
+    rho: float,
+    random_state: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
+    """Generate labels with fixed marginals/SNR and controlled residual correlation.
+
+    ``rho`` is the equicorrelation among label-specific Gaussian residuals.
+    Marginal residual variance remains one for every rho, so the univariate
+    signal-to-noise ratio is unchanged by design. Ranking each label at a fixed
+    quantile makes its realized prevalence identical across settings.
     """
-    Generate synthetic multi-label data with controlled label dependency.
+    if not 0 <= rho < 1:
+        raise ValueError("rho must lie in [0, 1).")
 
-    The dependency is implemented by having some labels be noisy copies of others.
-    - `dependency_strength` controls what fraction of labels are derived from others.
-    - At strength=0: all labels are generated independently from features.
-    - At strength=0.75: most labels are derived from a small set of base labels.
+    rng = np.random.default_rng(random_state)
+    x = rng.normal(size=(design.n_samples, design.n_features))
+    weights = rng.normal(size=(design.n_informative, design.n_labels))
+    weights /= np.linalg.norm(weights, axis=0, keepdims=True)
+    feature_scores = _standardize_columns(x[:, :design.n_informative] @ weights)
 
-    Returns X, Y, label_cardinality, cooccurrence_matrix, LDS.
-    """
-    rng = np.random.RandomState(random_state)
+    # The same draws are reused at every rho within a run.
+    shared_error = rng.normal(size=(design.n_samples, 1))
+    independent_error = rng.normal(size=(design.n_samples, design.n_labels))
+    residual = np.sqrt(rho) * shared_error + np.sqrt(1.0 - rho) * independent_error
+    latent = design.feature_signal * feature_scores + residual
 
-    # Generate feature matrix
-    X = rng.randn(n_samples, n_features)
+    n_positive = max(2, int(round(design.prevalence * design.n_samples)))
+    y = np.zeros((design.n_samples, design.n_labels), dtype=np.int64)
+    for label_index in range(design.n_labels):
+        positive_indices = np.argpartition(latent[:, label_index], -n_positive)[-n_positive:]
+        y[positive_indices, label_index] = 1
 
-    # Generate weights for informative features
-    W_base = rng.randn(n_informative, 1) * 0.8
+    metrics = label_space_metrics(y)
+    metrics["mean_true_score_auc"] = float(np.mean([
+        roc_auc_score(y[:, label_index], feature_scores[:, label_index])
+        for label_index in range(design.n_labels)
+    ]))
+    metrics["rho"] = float(rho)
+    metrics["target_prevalence"] = float(design.prevalence)
+    return x, y, feature_scores, metrics
 
-    # Number of base (independent) labels
-    n_base = max(2, int(n_labels * (1.0 - dependency_strength)))
-    n_derived = n_labels - n_base
-
-    # Generate base labels independently (but all use similar feature subset)
-    Y = np.zeros((n_samples, n_labels), dtype=int)
-
-    for l in range(n_base):
-        W_l = rng.randn(n_informative) * 0.6
-        logits = X[:, :n_informative] @ W_l
-        # Add threshold to control prevalence
-        threshold = np.percentile(logits, 75)
-        Y[:, l] = (logits > threshold).astype(int)
-
-    # Generate derived labels — each is a noisy copy of one base label
-    for l in range(n_base, n_labels):
-        parent = l % n_base  # which base label to copy
-        noise_prob = 1.0 - dependency_strength  # more dependency = less noise
-        Y[:, l] = Y[:, parent].copy()
-        # Flip some bits
-        flip_mask = rng.rand(n_samples) < noise_prob * 0.3
-        Y[flip_mask, l] = 1 - Y[flip_mask, l]
-
-    # Ensure minimum density
-    for i in range(n_samples):
-        if Y[i].sum() == 0:
-            Y[i, rng.randint(0, n_base)] = 1
-
-    # Compute metrics
-    label_cardinality = Y.sum(axis=1).mean()
-
-    # Compute co-occurrence matrix P(j=1 | i=1)
-    cooccurrence_matrix = np.zeros((n_labels, n_labels))
-    for i in range(n_labels):
-        mask_i = Y[:, i] == 1
-        ni = mask_i.sum()
-        if ni > 0:
-            for j in range(n_labels):
-                if i != j:
-                    cooccurrence_matrix[i, j] = Y[mask_i, j].mean() / max(ni, 1)
-
-    lds = float(np.mean(cooccurrence_matrix[np.eye(n_labels) == 0]))
-
-    return X, Y, label_cardinality, cooccurrence_matrix, lds
-
-
-# =============================================================================
-# Model Wrappers
-# =============================================================================
 
 class SimpleGCN(nn.Module):
-    """Simple GCN for multi-label prediction."""
-    def __init__(self, n_features, n_labels, hidden=128, n_samples=None):
+    """Two-layer feature encoder with one label-graph convolution."""
+
+    def __init__(self, n_features: int, n_labels: int, hidden_dim: int = 64):
         super().__init__()
         self.encoder = nn.Sequential(
-            nn.Linear(n_features, hidden),
-            nn.BatchNorm1d(hidden),
+            nn.Linear(n_features, hidden_dim),
             nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(hidden, 64),
-            nn.BatchNorm1d(64),
+            nn.Dropout(0.30),
+            nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
         )
-        # Learnable label embeddings
-        self.label_embeddings = nn.Parameter(torch.randn(n_labels, 64) * 0.1)
-        # GCN layer
-        self.gcn = nn.Linear(64, 64)
-        self.predictor = nn.Linear(64, 1)
+        self.label_embeddings = nn.Parameter(torch.randn(n_labels, hidden_dim) * 0.1)
+        self.graph_layer = nn.Linear(hidden_dim, hidden_dim)
 
-    def forward(self, x, adj):
-        # Encode features
-        h = self.encoder(x)  # (batch, 64)
-
-        # GCN on label embeddings
-        label_emb = self.label_embeddings  # (n_labels, 64)
-        adj_norm = adj / (adj.sum(dim=1, keepdim=True) + 1e-6)
-        label_emb = self.gcn(adj_norm @ label_emb)
-        label_emb = torch.relu(label_emb)
-
-        # Predict each label
-        batch_size = h.shape[0]
-        n_labels = label_emb.shape[0]
-        preds = []
-        for l in range(n_labels):
-            p = self.predictor(h * label_emb[l:l+1]).sigmoid()
-            preds.append(p)
-        return torch.cat(preds, dim=1)
+    def forward(self, x: torch.Tensor, adjacency: torch.Tensor) -> torch.Tensor:
+        patient_embedding = self.encoder(x)
+        degree = adjacency.sum(dim=1, keepdim=True).clamp_min(1e-8)
+        label_embedding = torch.relu(self.graph_layer((adjacency / degree) @ self.label_embeddings))
+        return patient_embedding @ label_embedding.T
 
 
-def compute_adjacency(Y_train, n_labels):
-    """Compute label co-occurrence adjacency matrix."""
-    adj = np.zeros((n_labels, n_labels))
-    for i in range(n_labels):
-        mask_i = Y_train[:, i] == 1
-        if mask_i.sum() > 1:
-            for j in range(n_labels):
-                if i != j:
-                    adj[i, j] = Y_train[mask_i, j].mean()
-    # Only keep positive associations above threshold
-    adj[adj < 0.1] = 0
-    # Add self-loops
-    adj = adj + np.eye(n_labels)
-    return torch.tensor(adj, dtype=torch.float32)
+def compute_adjacency(y_train: np.ndarray) -> torch.Tensor:
+    conditional = np.asarray(label_space_metrics(y_train)["conditional_cooccurrence"])
+    prevalence = y_train.mean(axis=0)
+    excess = np.clip(conditional - prevalence[None, :], 0.0, None)
+    return torch.tensor(excess + np.eye(y_train.shape[1]), dtype=torch.float32)
 
 
-def evaluate_model(model_name, X_train, Y_train, X_test, Y_test, n_labels):
-    """Train and evaluate a single model."""
-    t0 = time.perf_counter()
+def _macro_auc(y_true: np.ndarray, probabilities: np.ndarray) -> float:
+    aucs = [
+        roc_auc_score(y_true[:, label_index], probabilities[:, label_index])
+        for label_index in range(y_true.shape[1])
+        if np.unique(y_true[:, label_index]).size == 2
+    ]
+    return float(np.mean(aucs))
 
-    probs = np.zeros((len(X_test), n_labels))
 
-    if model_name == 'BR':
-        for l in range(n_labels):
-            if Y_train[:, l].sum() == 0 or Y_train[:, l].sum() == Y_train.shape[0]:
-                probs[:, l] = Y_train[:, l].mean()
-                continue
-            clf = lgb.LGBMClassifier(
-                n_estimators=100, max_depth=5, learning_rate=0.05,
-                verbose=-1, random_state=RANDOM_SEED,
-            )
-            clf.fit(X_train, Y_train[:, l])
-            probs[:, l] = clf.predict_proba(X_test)[:, 1]
+def _lgbm(seed: int) -> lgb.LGBMClassifier:
+    return lgb.LGBMClassifier(
+        n_estimators=120,
+        max_depth=5,
+        learning_rate=0.05,
+        num_leaves=24,
+        verbosity=-1,
+        random_state=seed,
+        n_jobs=1,
+    )
 
-    elif model_name == 'CC':
-        chain_order = np.random.permutation(n_labels)
-        probs_aug = np.zeros((len(X_test), n_labels))
-        for pos, l in enumerate(chain_order):
-            if Y_train[:, l].sum() == 0 or Y_train[:, l].sum() == Y_train.shape[0]:
-                probs[:, l] = Y_train[:, l].mean()
-                probs_aug[:, pos] = probs[:, l]
-                continue
-            # Augment features with previous predictions
-            aug_train = np.column_stack([X_train, Y_train[:, chain_order[:pos]]]) if pos > 0 else X_train
-            aug_test = np.column_stack([X_test, probs_aug[:, :pos]]) if pos > 0 else X_test
-            clf = lgb.LGBMClassifier(
-                n_estimators=100, max_depth=5, learning_rate=0.05,
-                verbose=-1, random_state=RANDOM_SEED,
-            )
-            clf.fit(aug_train, Y_train[:, l])
-            p = clf.predict_proba(aug_test)[:, 1]
-            probs[:, l] = p
-            probs_aug[:, pos] = p
 
-    elif model_name == 'ML-KNN':
-        for l in range(n_labels):
-            if Y_train[:, l].sum() < 5:
-                probs[:, l] = Y_train[:, l].mean()
-                continue
-            knn = KNeighborsClassifier(n_neighbors=10)
-            knn.fit(X_train, Y_train[:, l])
-            probs[:, l] = knn.predict_proba(X_test)[:, 1]
+def evaluate_model(
+    model_name: str,
+    x_train: np.ndarray,
+    y_train: np.ndarray,
+    x_val: np.ndarray,
+    y_val: np.ndarray,
+    x_test: np.ndarray,
+    y_test: np.ndarray,
+    seed: int,
+    gcn_epochs: int,
+) -> tuple[float, float]:
+    """Fit one prespecified model and return test Macro-AUC and wall time."""
+    start = time.perf_counter()
+    n_labels = y_train.shape[1]
+    probabilities = np.zeros((len(x_test), n_labels), dtype=float)
 
-    elif model_name == 'GCN':
-        # Prepare data
+    if model_name == "BR":
+        for label_index in range(n_labels):
+            classifier = _lgbm(seed + label_index)
+            classifier.fit(x_train, y_train[:, label_index])
+            probabilities[:, label_index] = classifier.predict_proba(x_test)[:, 1]
+
+    elif model_name == "CC":
+        chain = np.random.default_rng(seed).permutation(n_labels)
+        train_history = np.empty((len(x_train), 0))
+        test_history = np.empty((len(x_test), 0))
+        for position, label_index in enumerate(chain):
+            classifier = _lgbm(seed + position)
+            classifier.fit(np.column_stack((x_train, train_history)), y_train[:, label_index])
+            current = classifier.predict_proba(np.column_stack((x_test, test_history)))[:, 1]
+            probabilities[:, label_index] = current
+            train_history = np.column_stack((train_history, y_train[:, label_index]))
+            test_history = np.column_stack((test_history, current))
+
+    elif model_name == "ML-KNN":
+        for label_index in range(n_labels):
+            classifier = KNeighborsClassifier(n_neighbors=10, weights="distance")
+            classifier.fit(x_train, y_train[:, label_index])
+            probabilities[:, label_index] = classifier.predict_proba(x_test)[:, 1]
+
+    elif model_name == "GCN":
+        torch.manual_seed(seed)
         scaler = StandardScaler()
-        X_tr = scaler.fit_transform(X_train)
-        X_te = scaler.transform(X_test)
-        adj = compute_adjacency(Y_train, n_labels)
+        x_train_t = torch.tensor(scaler.fit_transform(x_train), dtype=torch.float32)
+        x_val_t = torch.tensor(scaler.transform(x_val), dtype=torch.float32)
+        x_test_t = torch.tensor(scaler.transform(x_test), dtype=torch.float32)
+        y_train_t = torch.tensor(y_train, dtype=torch.float32)
+        adjacency = compute_adjacency(y_train)
 
-        X_tr_t = torch.tensor(X_tr, dtype=torch.float32)
-        Y_tr_t = torch.tensor(Y_train, dtype=torch.float32)
-        X_te_t = torch.tensor(X_te, dtype=torch.float32)
-
-        model = SimpleGCN(n_features=X_train.shape[1], n_labels=n_labels, hidden=128)
+        model = SimpleGCN(x_train.shape[1], n_labels)
         optimizer = optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
-        loss_fn = nn.BCELoss()
+        prevalence = y_train.mean(axis=0)
+        positive_weight = torch.tensor(
+            (1.0 - prevalence) / np.maximum(prevalence, 1e-6), dtype=torch.float32
+        )
+        loss_function = nn.BCEWithLogitsLoss(pos_weight=positive_weight)
 
-        model.train()
-        for epoch in range(100):
+        best_state = None
+        best_validation_auc = -np.inf
+        stale_epochs = 0
+        for epoch in range(gcn_epochs):
+            model.train()
             optimizer.zero_grad()
-            preds = model(X_tr_t, adj)
-            loss = loss_fn(preds, Y_tr_t)
+            loss = loss_function(model(x_train_t, adjacency), y_train_t)
             loss.backward()
             optimizer.step()
 
+            if (epoch + 1) % 5 == 0:
+                model.eval()
+                with torch.no_grad():
+                    validation_probabilities = torch.sigmoid(model(x_val_t, adjacency)).numpy()
+                validation_auc = _macro_auc(y_val, validation_probabilities)
+                if validation_auc > best_validation_auc + 1e-4:
+                    best_validation_auc = validation_auc
+                    best_state = {
+                        key: value.detach().clone() for key, value in model.state_dict().items()
+                    }
+                    stale_epochs = 0
+                else:
+                    stale_epochs += 5
+                if stale_epochs >= 20:
+                    break
+
+        if best_state is not None:
+            model.load_state_dict(best_state)
         model.eval()
         with torch.no_grad():
-            p = model(X_te_t, adj)
-            probs = p.numpy()
+            probabilities = torch.sigmoid(model(x_test_t, adjacency)).numpy()
+    else:
+        raise ValueError(f"Unknown model: {model_name}")
 
-    elif model_name == 'TabPFN':
-        try:
-            from tabpfn import TabPFNClassifier
-            for l in range(n_labels):
-                if Y_train[:, l].sum() == 0 or Y_train[:, l].sum() == Y_train.shape[0]:
-                    probs[:, l] = Y_train[:, l].mean()
-                    continue
-                clf = TabPFNClassifier(device='cpu')
-                clf.fit(X_train[:1000] if len(X_train) > 1000 else X_train,
-                        Y_train[:1000, l] if len(Y_train) > 1000 else Y_train[:, l])
-                probs[:, l] = clf.predict_proba(X_test)[:, 1]
-        except ImportError:
-            probs = np.random.rand(len(X_test), n_labels) * 0.3
-
-    train_time = time.perf_counter() - t0
-
-    # Compute per-label AUC
-    aucs = []
-    for l in range(n_labels):
-        if Y_test[:, l].sum() == 0 or Y_test[:, l].sum() == Y_test.shape[0]:
-            aucs.append(0.5)
-        else:
-            aucs.append(roc_auc_score(Y_test[:, l], probs[:, l]))
-
-    macro_auc = np.mean(aucs)
-    label_card = Y_test.sum(axis=1).mean()
-
-    return macro_auc, train_time, probs
+    return _macro_auc(y_test, probabilities), time.perf_counter() - start
 
 
-# =============================================================================
-# Main Experiment
-# =============================================================================
-
-def run_synthetic_experiment():
-    """Run full synthetic dependency experiment."""
-    print("=" * 70)
-    print("Synthetic Label Dependency Experiment")
-    print("=" * 70)
-
-    # Experiment configuration
-    n_samples = 1000
-    n_features = 50
-    n_labels = 10
-    test_size = 0.3
-    n_runs = 1  # single run for reproducibility
-
-    # Dependency levels to test
-    dependency_levels = {
-        'Low': 0.05,
-        'Medium': 0.25,
-        'High': 0.50,
-        'Very High': 0.75,
+def run_controlled_experiment(
+    design: SyntheticDesign,
+    rho_levels: tuple[float, ...],
+    n_runs: int,
+    gcn_epochs: int,
+    output_dir: str | os.PathLike | None = None,
+    run_indices: list[int] | None = None,
+    assemble: bool = True,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Run paired repeated simulations and export raw and summarized results."""
+    destination = Path(output_dir or OUTPUT_DIR)
+    destination.mkdir(parents=True, exist_ok=True)
+    checkpoint_specification = {
+        "design": design.__dict__,
+        "rho_levels": list(rho_levels),
+        "n_runs": n_runs,
+        "gcn_epochs": gcn_epochs,
     }
-
-    # Models to compare (TabPFN omitted due to CPU time; values estimated from paper)
-    models = ['BR', 'CC', 'ML-KNN', 'GCN']
-
-    # Results storage
-    all_results = {}
-    summary_rows = []
-
-    print(f"\nConfig: n_samples={n_samples}, n_features={n_features}, "
-          f"n_labels={n_labels}, n_runs={n_runs}")
-    print(f"Dependency levels: {list(dependency_levels.keys())}")
-    print(f"Models: {models}\n")
-
-    for dep_name, dep_strength in dependency_levels.items():
-        print(f"\n{'─' * 50}")
-        print(f"  Dependency Level: {dep_name} (strength={dep_strength})")
-        print(f"{'─' * 50}")
-
-        dep_results = {model: {'aucs': [], 'times': []} for model in models}
-        dep_details = {}
-
-        for run in range(n_runs):
-            seed = RANDOM_SEED + run * 100
-            print(f"  Run {run+1}/{n_runs} (seed={seed})...")
-
-            # Generate data
-            X, Y, lc, cooc, lds = generate_synthetic_multilabel(
-                n_samples=n_samples, n_features=n_features,
-                n_labels=n_labels, dependency_strength=dep_strength,
-                random_state=seed,
-            )
-
-            X_train, X_test, Y_train, Y_test = train_test_split(
-                X, Y, test_size=test_size, random_state=seed,
-            )
-
-            dep_details[f'run_{run}'] = {
-                'label_cardinality': float(lc),
-                'label_dependency_score': float(lds),
-            }
-
-            for model_name in models:
-                auc, t, _ = evaluate_model(
-                    model_name, X_train, Y_train, X_test, Y_test, n_labels
+    fingerprint = hashlib.sha256(
+        json.dumps(checkpoint_specification, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    checkpoint_manifest = destination / "controlled_dependency_checkpoint_specification.json"
+    if not checkpoint_manifest.exists():
+        temporary_manifest = checkpoint_manifest.with_name(
+            f"{checkpoint_manifest.name}.{os.getpid()}.tmp"
+        )
+        temporary_manifest.write_text(
+            json.dumps({"sha256": fingerprint, **checkpoint_specification}, indent=2),
+            encoding="utf-8",
+        )
+        os.replace(temporary_manifest, checkpoint_manifest)
+    previous = json.loads(checkpoint_manifest.read_text(encoding="utf-8"))
+    if previous.get("sha256") != fingerprint:
+        raise RuntimeError("Existing synthetic checkpoints use a different specification.")
+    selected_runs = list(range(n_runs) if run_indices is None else run_indices)
+    for run in selected_runs:
+        checkpoint = destination / f"controlled_dependency_run_{run + 1}.csv"
+        if checkpoint.exists():
+            continue
+        raw_rows: list[dict] = []
+        seed = RANDOM_SEED + 1000 * run
+        train_index, val_index, test_index = _fixed_split_indices(design.n_samples, seed + 19)
+        for rho in rho_levels:
+            x, y, _, metrics = generate_synthetic_multilabel(design, rho, seed)
+            for model_name in MODEL_NAMES:
+                macro_auc, elapsed = evaluate_model(
+                    model_name,
+                    x[train_index], y[train_index],
+                    x[val_index], y[val_index],
+                    x[test_index], y[test_index],
+                    seed + 100 * MODEL_NAMES.index(model_name),
+                    gcn_epochs,
                 )
-                dep_results[model_name]['aucs'].append(auc)
-                dep_results[model_name]['times'].append(t)
-                print(f"    {model_name:10s}: Macro-AUC={auc:.4f}, Time={t:.1f}s")
+                raw_rows.append({
+                    "run": run,
+                    "seed": seed,
+                    "rho": rho,
+                    "model": model_name,
+                    "macro_auc": macro_auc,
+                    "elapsed_seconds": elapsed,
+                    "label_cardinality": metrics["label_cardinality"],
+                    "label_density": metrics["label_density"],
+                    "realized_lds": metrics["label_dependency_score"],
+                    "median_conditional_cooccurrence": metrics["median_conditional_cooccurrence"],
+                    "mean_pairwise_phi": metrics["mean_pairwise_phi"],
+                    "mean_true_score_auc": metrics["mean_true_score_auc"],
+                })
+                print(
+                    f"run={run + 1:02d}/{n_runs} rho={rho:.2f} {model_name:6s} "
+                    f"LDS={metrics['label_dependency_score']:.3f} AUC={macro_auc:.4f}"
+                )
+        pd.DataFrame(raw_rows).to_csv(checkpoint, index=False)
 
-        # Aggregate across runs
-        for model_name in models:
-            aucs = dep_results[model_name]['aucs']
-            times = dep_results[model_name]['times']
-            all_results[f'{dep_name}_{model_name}'] = {
-                'macro_auc_mean': float(np.mean(aucs)),
-                'macro_auc_std': float(np.std(aucs)),
-                'time_mean': float(np.mean(times)),
-            }
-            summary_rows.append({
-                'Dependency': dep_name,
-                'Strength': dep_strength,
-                'Model': model_name,
-                'Macro-AUC': f"{np.mean(aucs):.4f} ± {np.std(aucs):.4f}",
-                'Time (s)': f"{np.mean(times):.1f}",
-                'Label_Cardinality': dep_details[f'run_0']['label_cardinality'],
-                'LDS': dep_details[f'run_0']['label_dependency_score'],
-            })
+    if not assemble:
+        available = [destination / f"controlled_dependency_run_{run + 1}.csv" for run in selected_runs]
+        raw = pd.concat([pd.read_csv(path) for path in available if path.exists()], ignore_index=True)
+        return raw, pd.DataFrame()
 
-    # Save detailed results
-    results_path = os.path.join(OUTPUT_DIR, 'synthetic_results.json')
-    with open(results_path, 'w') as f:
-        json.dump({
-            'config': {
-                'n_samples': n_samples, 'n_features': n_features,
-                'n_labels': n_labels, 'n_runs': n_runs,
-                'test_size': test_size,
-            },
-            'dependency_levels': dependency_levels,
-            'results': all_results,
-            'summary': summary_rows,
-        }, f, indent=2)
-    print(f"\nResults saved to {results_path}")
-
-    # Save summary CSV
-    df = pd.DataFrame(summary_rows)
-    csv_path = os.path.join(OUTPUT_DIR, 'synthetic_summary.csv')
-    df.to_csv(csv_path, index=False)
-    print(f"Summary CSV saved to {csv_path}")
-
-    # Print final summary table
-    print(f"\n{'=' * 70}")
-    print("SUMMARY: Macro-AUC by Dependency Level")
-    print(f"{'=' * 70}")
-    pivot = df.pivot_table(
-        values='Macro-AUC', index='Model', columns='Dependency', aggfunc='first'
+    checkpoints = [destination / f"controlled_dependency_run_{run + 1}.csv" for run in range(n_runs)]
+    missing = [path.name for path in checkpoints if not path.exists()]
+    if missing:
+        raise RuntimeError(f"Synthetic run checkpoints are incomplete: {missing}")
+    raw = pd.concat([pd.read_csv(path) for path in checkpoints], ignore_index=True)
+    summary = (
+        raw.groupby(["rho", "model"], as_index=False)
+        .agg(
+            macro_auc_mean=("macro_auc", "mean"),
+            macro_auc_sd=("macro_auc", "std"),
+            realized_lds_mean=("realized_lds", "mean"),
+            realized_lds_sd=("realized_lds", "std"),
+            label_density_mean=("label_density", "mean"),
+            label_density_sd=("label_density", "std"),
+            true_score_auc_mean=("mean_true_score_auc", "mean"),
+            true_score_auc_sd=("mean_true_score_auc", "std"),
+            elapsed_seconds_mean=("elapsed_seconds", "mean"),
+        )
     )
-    # Reorder columns
-    pivot = pivot[['Low', 'Medium', 'High', 'Very High']]
-    print(pivot.to_string())
 
-    return all_results, df
-
-
-def run_density_experiment():
-    """Run label density analysis — fixed dependency, varying density."""
-    print("\n" + "=" * 70)
-    print("Label Density Analysis Experiment")
-    print("=" * 70)
-
-    n_samples = 1000
-    n_features = 50
-    n_labels = 10
-    test_size = 0.3
-    models = ['BR', 'CC', 'ML-KNN', 'GCN']
-
-    # Fix dependency at Medium (0.25), vary density via prevalence threshold
-    density_configs = {
-        'Sparse (LD≈0.05)': {'dep': 0.25, 'prev_percentile': 90},
-        'Medium (LD≈0.15)': {'dep': 0.25, 'prev_percentile': 80},
-        'Dense (LD≈0.35)': {'dep': 0.25, 'prev_percentile': 60},
+    raw.to_csv(destination / "controlled_dependency_raw.csv", index=False)
+    summary.to_csv(destination / "controlled_dependency_summary.csv", index=False)
+    metadata = {
+        "design": design.__dict__,
+        "rho_levels": list(rho_levels),
+        "n_runs": n_runs,
+        "gcn_epochs_max": gcn_epochs,
+        "split": {"train": 0.70, "validation": 0.15, "test": 0.15},
+        "models": list(MODEL_NAMES),
+        "interpretation": (
+            "rho is the residual-correlation parameter. realized_lds is the observed "
+            "binary-label metric and is the only dependency value used in reporting."
+        ),
     }
-
-    all_rows = []
-    results = {}
-
-    for cfg_name, cfg in density_configs.items():
-        print(f"\n  {cfg_name}...")
-        X, Y, lc, cooc, lds = generate_synthetic_multilabel(
-            n_samples=n_samples, n_features=n_features,
-            n_labels=n_labels, dependency_strength=cfg['dep'],
-            random_state=42,
-        )
-        # Manually adjust density
-        for l in range(n_labels):
-            n_pos = int(n_samples * (100 - cfg['prev_percentile']) / 100)
-            Y[:n_pos, l] = 1
-            Y[n_pos:, l] = 0
-        np.random.seed(42)
-        Y = Y[np.random.permutation(n_samples)]  # shuffle
-        # Recompute
-        ld = Y.sum() / (n_samples * n_labels)
-        lc_new = Y.sum(axis=1).mean()
-
-        X_train, X_test, Y_train, Y_test = train_test_split(
-            X, Y, test_size=test_size, random_state=42)
-
-        for model_name in models:
-            auc, t, _ = evaluate_model(
-                model_name, X_train, Y_train, X_test, Y_test, n_labels)
-            all_rows.append({
-                'Density': cfg_name.split(' ')[0],
-                'Model': model_name,
-                'Macro-AUC': f"{auc:.4f}",
-                'LDS': f"{lds:.3f}",
-                'LD': f"{ld:.3f}",
-                'LC': f"{lc_new:.2f}",
-            })
-            results[f'{cfg_name}_{model_name}'] = float(auc)
-            print(f"    {model_name:10s}: Macro-AUC={auc:.4f}")
-
-    # Save
-    df = pd.DataFrame(all_rows)
-    df.to_csv(os.path.join(OUTPUT_DIR, 'density_summary.csv'), index=False)
-    with open(os.path.join(OUTPUT_DIR, 'density_results.json'), 'w') as f:
-        json.dump({'results': results, 'summary': all_rows}, f, indent=2)
-
-    print("\nDensity Analysis Summary:")
-    pivot = df.pivot_table(values='Macro-AUC', index='Model', columns='Density', aggfunc='first')
-    print(pivot.to_string())
-    return results, df
+    with open(
+        destination / "controlled_dependency_metadata.json",
+        "w",
+        encoding="utf-8",
+    ) as handle:
+        json.dump(metadata, handle, indent=2)
+    return raw, summary
 
 
-def run_sample_size_experiment():
-    """Run sample size analysis — fixed dependency, varying training set size."""
-    print("\n" + "=" * 70)
-    print("Sample Size Analysis Experiment")
-    print("=" * 70)
-
-    n_features = 50
-    n_labels = 10
-    test_size = 0.3
-    models = ['BR', 'CC', 'ML-KNN', 'GCN']
-
-    # Fix Medium dependency, vary total sample size
-    sample_sizes = [300, 600, 1200, 2400]
-    dep_strength = 0.25  # Medium dependency
-
-    all_rows = []
-    results = {}
-
-    for n_samples in sample_sizes:
-        print(f"\n  n_samples={n_samples}...")
-        X, Y, lc, cooc, lds = generate_synthetic_multilabel(
-            n_samples=n_samples, n_features=n_features,
-            n_labels=n_labels, dependency_strength=dep_strength,
-            random_state=42,
-        )
-
-        X_train, X_test, Y_train, Y_test = train_test_split(
-            X, Y, test_size=test_size, random_state=42)
-        n_train = len(X_train)
-
-        for model_name in models:
-            auc, t, _ = evaluate_model(
-                model_name, X_train, Y_train, X_test, Y_test, n_labels)
-            all_rows.append({
-                'Sample_Size': n_samples,
-                'N_Train': n_train,
-                'Model': model_name,
-                'Macro-AUC': f"{auc:.4f}",
-                'Time_s': f"{t:.1f}",
-            })
-            results[f'n{n_samples}_{model_name}'] = float(auc)
-            print(f"    {model_name:10s}: Macro-AUC={auc:.4f}, Time={t:.1f}s (n_train={n_train})")
-
-    # Save
-    df = pd.DataFrame(all_rows)
-    df.to_csv(os.path.join(OUTPUT_DIR, 'sample_size_summary.csv'), index=False)
-    with open(os.path.join(OUTPUT_DIR, 'sample_size_results.json'), 'w') as f:
-        json.dump({'results': results, 'summary': all_rows}, f, indent=2)
-
-    print("\nSample Size Summary:")
-    pivot = df.pivot_table(values='Macro-AUC', index='Model', columns='Sample_Size', aggfunc='first')
-    print(pivot.to_string())
-    return results, df
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--runs", type=int, default=10, help="Independent repeated data sets.")
+    parser.add_argument("--samples", type=int, default=1000)
+    parser.add_argument("--epochs", type=int, default=80, help="Maximum GCN epochs.")
+    parser.add_argument("--prevalence", type=float, default=0.10)
+    parser.add_argument("--quick", action="store_true", help="Two-run smoke test.")
+    return parser.parse_args()
 
 
-if __name__ == '__main__':
-    run_synthetic_experiment()
-    run_density_experiment()
-    run_sample_size_experiment()
-    run_density_experiment()
+def main() -> None:
+    args = parse_args()
+    if args.quick:
+        design = SyntheticDesign(n_samples=500, prevalence=args.prevalence)
+        n_runs, epochs = 2, 30
+        rho_levels = (0.0, 0.5, 0.9)
+    else:
+        design = SyntheticDesign(n_samples=args.samples, prevalence=args.prevalence)
+        n_runs, epochs = args.runs, args.epochs
+        rho_levels = (0.0, 0.25, 0.50, 0.75, 0.90)
+
+    _, summary = run_controlled_experiment(design, rho_levels, n_runs, epochs)
+    print("\nControlled synthetic experiment summary")
+    print(summary.to_string(index=False))
+    print(f"\nArtifacts: {OUTPUT_DIR}")
+
+
+if __name__ == "__main__":
+    main()

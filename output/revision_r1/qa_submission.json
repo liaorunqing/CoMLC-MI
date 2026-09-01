@@ -1,0 +1,44 @@
+{
+  "config_and_features": {
+    "feature_counts": {
+      "admission_safe_v1": 91,
+      "prospective_24h": 94,
+      "prospective_48h": 97,
+      "prospective_72h": 100,
+      "retrospective_full_111": 111
+    },
+    "bootstrap": 2000,
+    "gcn_seeds": "42--51"
+  },
+  "checkpoints": {
+    "outer_checkpoints": 25,
+    "unique_repeat_fold_pairs": 25
+  },
+  "internal": {
+    "patients": 1700,
+    "labels": 12,
+    "oof_predictions_per_patient": 5,
+    "models": 12
+  },
+  "gcn_temporal_synthetic": {
+    "gcn_rows": 180,
+    "temporal_horizons": 4,
+    "synthetic_repeats": 10
+  },
+  "external": {
+    "index_events": 29596,
+    "death_30d": 3888,
+    "death_7d": 2408,
+    "complete_cases": 28477
+  },
+  "manuscript": {
+    "abstract_words": 240,
+    "references": 29
+  },
+  "submission_artifacts": {
+    "submission_files": 6,
+    "required_files": 5,
+    "pdf_pages": 17,
+    "response_comments": 14
+  }
+}
