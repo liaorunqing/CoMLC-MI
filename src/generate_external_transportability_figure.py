@@ -22,7 +22,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULT_DIR = ROOT / "output" / "benchmark" / "external_transportability"
-FIGURE_DIR = ROOT / "figures" / "r1"
+FIGURE_DIR = ROOT / "figures" / "manuscript"
 
 TABPFN = "#2166AC"
 LOGISTIC = "#4D4D4D"

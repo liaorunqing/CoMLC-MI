@@ -46,7 +46,7 @@ def _binary_map(series: pd.Series) -> pd.Series:
 
 
 def harmonize_strict(uci: pd.DataFrame, registry: pd.DataFrame) -> HarmonizedData:
-    """Create the revision-locked strict four-feature source/external datasets."""
+    """Create the locked four-feature source and external datasets."""
     registry = registry.copy()
     registry.columns = registry.columns.astype(str).str.strip()
     first = registry.loc[registry["Event number"].eq(1)].copy()
@@ -605,7 +605,7 @@ def run(
     metadata = {
         "name": "cross-cohort mortality transportability stress test",
         "scope": "Partial transportability analysis of mortality using a reduced common-feature model.",
-        "specification_timing": "Revision-stage specification locked before external model fitting and evaluation.",
+        "specification_timing": "Specification locked before external model fitting and evaluation.",
         "source_endpoint": "In-hospital fatal outcome (LET_IS > 0).",
         "external_primary_endpoint": "30-day all-cause mortality derived from admission and death dates.",
         "external_sensitivity_endpoint": "7-day all-cause mortality.",

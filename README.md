@@ -58,7 +58,7 @@ redistributed here.
 - `src/run_benchmark.py`: canonical command-line entry point.
 - `src/`: modeling, statistical analysis, figure generation, and audit code.
 - `output/benchmark/`: machine-readable benchmark results and metadata.
-- `paper/`: manuscript source, appendices, generated tables, and figures.
+- `figures/manuscript/`: publication figures generated from the released aggregate results.
 - `tests/`: leakage, feature-contract, statistical, model, and packaging tests.
 
 The machine-readable results include five outer-fold OOF predictions per

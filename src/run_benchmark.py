@@ -4,12 +4,12 @@ Run with::
 
     python -m src.run_benchmark --config configs/comlc_mi_benchmark.json
 
-The implementation remains in :mod:`src.run_revision` so historical commands
-continue to work without maintaining two analysis engines.
+The implementation is provided by :mod:`src.benchmark_pipeline`.
 """
 
-from .run_revision import main
+from .benchmark_pipeline import main
 
 
 if __name__ == "__main__":
     main()
+

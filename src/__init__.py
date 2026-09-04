@@ -1,2 +1,1 @@
-"""CoMLC-MI revision analysis package."""
-
+"""CoMLC-MI benchmark analysis package."""

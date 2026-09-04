@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
-from .revision_features import FoldPreprocessor, LABEL_COLS, prepare_outcomes
-from .revision_metrics import (
+from .benchmark_features import FoldPreprocessor, LABEL_COLS, prepare_outcomes
+from .benchmark_metrics import (
     aggregate_metrics,
     calibration_bootstrap_intervals,
     per_label_metrics,
@@ -109,3 +109,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
