@@ -1,8 +1,8 @@
-"""Single formal entry point for the IEEE Access R1 reconstruction.
+"""Checkpointed implementation of the CoMLC-MI benchmark.
 
 Formal command
 --------------
-python -m src.run_revision --config configs/access_2026_35668_r1.json
+python -m src.run_benchmark --config configs/comlc_mi_benchmark.json
 
 The run is checkpointed by outer fold.  Optional ``--stage`` is provided for
 auditing and recovery; omitting it executes the full locked workflow.
@@ -63,6 +63,9 @@ def _load_config(path: Path) -> dict:
         raise ValueError(f"Missing configuration fields: {missing}")
     if config["feature_contract"] != "admission_safe_v1":
         raise ValueError("The formal primary analysis must use admission_safe_v1.")
+    # Backward-compatible spelling for the historical configuration file.
+    if "RAkEL-RF" in config["models"] and "RAkELd-RF" not in config["models"]:
+        config["models"]["RAkELd-RF"] = config["models"].pop("RAkEL-RF")
     return config
 
 
@@ -121,12 +124,14 @@ def _package_versions() -> dict[str, str]:
 
 
 def _write_environment(output_dir: Path, config_path: Path) -> None:
+    config = _load_config(config_path)
     payload = {
         "python": sys.version,
         "platform": platform.platform(),
         "packages": _package_versions(),
         "config": str(config_path.as_posix()),
         "config_sha256": hashlib.sha256(config_path.read_bytes()).hexdigest(),
+        "tabpfn_model": config["models"]["TabPFN"],
     }
     (output_dir / "runtime_environment.json").write_text(
         json.dumps(payload, indent=2), encoding="utf-8"
@@ -273,7 +278,10 @@ def _fit_outer_fold(
         stored = np.load(checkpoint)
         result = {"test_indices": stored["test_indices"]}
         for name in ALL_PREDICTION_NAMES:
-            result[name] = stored[_slug(name)]
+            key = _slug(name)
+            if key not in stored.files and name == "RAkELd-RF" and "rakel_rf" in stored.files:
+                key = "rakel_rf"
+            result[name] = stored[key]
         return result
 
     seed = config["seed"] + fold.repeat * 1000 + fold.fold * 100
@@ -392,7 +400,12 @@ def run_internal(
 def load_internal_predictions(config: dict, output_dir: Path):
     stored = np.load(output_dir / "internal_oof_predictions.npz")
     outcomes = stored["y_true"]
-    predictions = {name: stored[_slug(name)] for name in ALL_PREDICTION_NAMES}
+    predictions = {}
+    for name in ALL_PREDICTION_NAMES:
+        key = _slug(name)
+        if key not in stored.files and name == "RAkELd-RF" and "rakel_rf" in stored.files:
+            key = "rakel_rf"
+        predictions[name] = stored[key]
     return outcomes, predictions
 
 
@@ -433,11 +446,16 @@ def summarize_internal(config: dict, output_dir: Path) -> None:
     )
     bootstrap_summary.to_csv(output_dir / "internal_bootstrap_summary.csv", index=False)
     metric_names = list(aggregate_metrics(outcomes, predictions[MODEL_NAMES[0]]))
+    point_estimates = {
+        name: aggregate_metrics(outcomes, probability)
+        for name, probability in predictions.items()
+    }
     paired_metric_difference(
         bootstrap_arrays,
         metric_names,
         ENSEMBLE_WEIGHTED,
         "TabPFN",
+        point_estimates=point_estimates,
     ).to_csv(output_dir / "primary_paired_difference.csv", index=False)
     np.savez_compressed(
         output_dir / "internal_bootstrap_arrays.npz",
@@ -710,7 +728,7 @@ def main() -> None:
                 "temporal_shard_index": args.temporal_shard_index,
                 "temporal_shards": args.temporal_shards,
                 "elapsed_seconds": time.time() - started,
-                "formal_command": "python -m src.run_revision --config configs/access_2026_35668_r1.json",
+                "formal_command": f"python -m src.run_benchmark --config {args.config.as_posix()}",
             },
             indent=2,
         ),

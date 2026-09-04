@@ -1,4 +1,4 @@
-"""Crossref-first metadata audit for the R1 manuscript bibliography.
+"""Crossref-first metadata audit for the manuscript bibliography.
 
 This script is intentionally read-only with respect to the manuscript.  It
 writes a machine-readable report that can be reviewed before any citation is
@@ -12,6 +12,7 @@ import re
 import time
 from difflib import SequenceMatcher
 from pathlib import Path
+from urllib.parse import unquote
 
 import pandas as pd
 import requests
@@ -43,15 +44,19 @@ def parse_bibliography(path: Path) -> list[dict]:
     ):
         body = " ".join(match.group("body").split())
         title_match = re.search(r"``(.*?)''", body)
-        doi_match = re.search(r"doi:\s*([^\s]+)", body, re.I)
+        href_doi = re.search(r"\\href\{https?://doi\.org/([^}]+)\}", body, re.I)
+        text_doi = re.search(r"doi:\s*([^\s]+)", body, re.I)
+        doi_match = href_doi or text_doi
         # Exclude the DOI because its suffix frequently contains an earlier
         # registration year that is not the bibliographic publication year.
         bibliographic_body = body[: doi_match.start()] if doi_match else body
         year_matches = re.findall(r"\b(?:19|20)\d{2}\b", bibliographic_body)
-        doi = doi_match.group(1).rstrip(".,") if doi_match else None
+        doi = doi_match.group(1).rstrip(".,}") if doi_match else None
         if doi:
             doi = doi.replace("\\_", "_")
+            doi = doi.replace("\\%", "%")
             doi = doi.replace("$<$", "<").replace("$>$", ">")
+            doi = unquote(doi)
         records.append(
             {
                 "key": match.group("key"),
@@ -71,12 +76,24 @@ def audit(record: dict, session: requests.Session) -> dict:
             "crossref_title": None,
             "crossref_year": None,
             "crossref_first_author": None,
+            "doi_resolves": None,
             "title_similarity": None,
             "year_match": None,
         }
     )
     if not record["doi"]:
         return row
+    try:
+        resolved = session.get(
+            f"https://doi.org/{record['doi']}",
+            timeout=30,
+            allow_redirects=True,
+            stream=True,
+        )
+        row["doi_resolves"] = resolved.status_code < 400
+        resolved.close()
+    except requests.RequestException:
+        row["doi_resolves"] = False
     url = f"https://api.crossref.org/works/{requests.utils.quote(record['doi'], safe='')}"
     try:
         response = session.get(url, timeout=30)
@@ -90,9 +107,16 @@ def audit(record: dict, session: requests.Session) -> dict:
         row["crossref_year"] = _year(message)
         row["crossref_first_author"] = authors[0].get("family") if authors else None
         if record["manuscript_title"] and title:
-            row["title_similarity"] = SequenceMatcher(
-                None, _plain(record["manuscript_title"]), _plain(title)
-            ).ratio()
+            manuscript_title = _plain(record["manuscript_title"])
+            crossref_title = _plain(title)
+            if min(len(manuscript_title), len(crossref_title)) >= 5 and (
+                manuscript_title in crossref_title or crossref_title in manuscript_title
+            ):
+                row["title_similarity"] = 1.0
+            else:
+                row["title_similarity"] = SequenceMatcher(
+                    None, manuscript_title, crossref_title
+                ).ratio()
         if record["manuscript_year"] and row["crossref_year"]:
             row["year_match"] = record["manuscript_year"] == row["crossref_year"]
     except requests.RequestException as exc:
@@ -103,7 +127,7 @@ def audit(record: dict, session: requests.Session) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--tex", default="paper/gai_revised_clean.tex")
-    parser.add_argument("--output", default="output/revision_r1/reference_crossref_audit.csv")
+    parser.add_argument("--output", default="output/benchmark/reference_crossref_audit.csv")
     args = parser.parse_args()
     session = requests.Session()
     session.headers["User-Agent"] = "CoMLC-MI-reference-audit/1.0 (mailto:corresponding-author@example.invalid)"
@@ -115,9 +139,13 @@ def main() -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     frame = pd.DataFrame(rows)
     frame.to_csv(output, index=False)
+    has_titles = frame["manuscript_title"].notna() & frame["crossref_title"].notna()
     critical = frame[
         frame["doi"].notna()
-        & ((frame["crossref_status"] != "200") | (frame["title_similarity"].fillna(0) < 0.80))
+        & (
+            ((frame["crossref_status"] != "200") & ~frame["doi_resolves"].eq(True))
+            | (has_titles & (frame["title_similarity"].fillna(0) < 0.80))
+        )
     ]
     print(f"Audited {len(frame)} references; {len(critical)} require manual follow-up.")
     if len(critical):

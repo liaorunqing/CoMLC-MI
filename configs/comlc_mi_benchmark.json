@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.1",
+  "analysis_name": "comlc-mi-benchmark",
+  "seed": 42,
+  "dataset": "dataset/Myocardial infarction complications Database.csv",
+  "output_dir": "output/benchmark",
+  "feature_contract": "admission_safe_v1",
+  "validation": {"outer_repeats": 5, "outer_folds": 5, "inner_folds": 4, "multilabel_stratification_order": 2},
+  "preprocessing": {"iterative_rf_estimators": 50, "iterative_max_iter": 10, "standardize_nonbinary": true, "missing_indicators": ["S_AD_KBRIG", "D_AD_KBRIG"]},
+  "models": {
+    "BR-LR": {"max_iter": 5000, "class_weight": "balanced"},
+    "BR-XGBoost": {"n_estimators": 200, "max_depth": 4, "learning_rate": 0.05, "n_jobs": 1},
+    "BR-LightGBM": {"n_estimators": 200, "max_depth": 6, "learning_rate": 0.03, "n_jobs": 1},
+    "BR-CatBoost": {"iterations": 500, "depth": 6, "learning_rate": 0.03, "early_stopping_rounds": 50, "thread_count": 1},
+    "ECC-LightGBM": {"n_chains": 50, "n_estimators": 200, "max_depth": 6, "learning_rate": 0.03, "parallel_jobs": -1},
+    "LP-RF": {"n_estimators": 200, "max_depth": 10, "n_jobs": -1},
+    "RAkELd-RF": {"n_estimators": 200, "max_depth": 10, "labelset_size": 4, "n_jobs": -1, "subset_policy": "three non-overlapping four-label subsets"},
+    "Shared-MLP": {"hidden": [128, 64], "dropout": 0.2, "learning_rate": 0.001, "weight_decay": 0.00001, "batch_size": 64, "max_epochs": 200, "patience": 20, "min_delta": 0.0001},
+    "MultiTask-DNN": {"shared_width": 128, "head_width": 32, "dropout": 0.2, "learning_rate": 0.001, "weight_decay": 0.00001, "batch_size": 64, "max_epochs": 200, "patience": 20, "min_delta": 0.0001},
+    "TabPFN": {"display_name": "TabPFN-3", "package": "tabpfn==8.0.1", "model_path": "auto", "checkpoint_filename": "tabpfn-v3-classifier-v3_default.ckpt", "checkpoint_source": "Prior Labs model cache downloaded by the tabpfn package; weight file is not redistributed", "checkpoint_sha256": "D0D865D54DFBC524F5703104BE90620182DCA7E5FB2C16DE72E9959EA18F3988", "top_features": 80, "selector_estimators": 50, "inner_n_estimators": 2, "n_estimators": 8, "device": "cpu", "n_preprocessing_jobs": 1}
+  },
+  "ensembles": {"equal": "LP-RF + TabPFN-3 with fixed 0.5/0.5 weights", "validation_weighted": "Per-label softmax weights learned only from four-fold inner OOF AUROC"},
+  "statistics": {"primary_metric": "macro_auroc", "primary_contrast": "Ensemble-LP-RF-TabPFN-Weighted - TabPFN", "threshold": 0.5, "ece_bins": 10, "patient_bootstrap": 2000, "patient_bootstrap_jobs": 12, "calibration_bootstrap_jobs": 12, "low_event_threshold": 30, "paired_permutations": 10000, "multiple_comparison": "Benjamini-Hochberg across 12 labels", "calibration_bootstrap_models": ["Ensemble-LP-RF-TabPFN-Weighted", "TabPFN"], "bootstrap_estimand_note": "Intervals condition on saved mean repeated-OOF predictions and do not propagate full model-refitting uncertainty"},
+  "gcn_ablation": {"seeds": [42,43,44,45,46,47,48,49,50,51], "configurations": 18, "encoder_hidden": [256,128], "embedding_dim": 64, "graph_hidden": 128, "concat_head_width": 32, "dropout": 0.3, "asymmetric_cutoff": 0.15, "symmetric_cutoff": 0.08, "learning_rate": 0.001, "weight_decay": 0.0001, "max_epochs": 200, "batch_size": 64, "patience": 25, "min_delta": 0.0001, "asymmetric_loss_gamma_negative": [2.0,3.0], "asymmetric_loss_gamma_positive": 0.0, "asymmetric_loss_clip": 0.05, "paired_initialization_and_batches": true, "positive_weight": "N_negative / N_positive", "inference_scope": "optimization-randomness comparison on one fixed train-validation-test partition"},
+  "synthetic": {"samples": 1000, "features": 50, "labels": 10, "correlation_levels": [0.0,0.25,0.5,0.75,0.9], "repeats": 10, "gcn_epochs": 80, "knn_name": "BR-kNN (distance-weighted, k=10)"},
+  "external": {"name": "cross-cohort mortality transportability stress test", "hungarian_xlsx": null, "first_event_rule": "Event number = 1", "primary_endpoint": "30-day all-cause mortality", "sensitivity_endpoint": "7-day all-cause mortality", "source_cv_folds": 5, "logistic_max_iter": 5000, "tabpfn_n_estimators": 8, "tabpfn_n_preprocessing_jobs": 1, "bootstrap": 2000, "expected_first_events": 29596, "expected_30d_deaths": 3888, "expected_7d_deaths": 2408, "expected_complete_cases": 28477, "specification_timing": "locked before external model fitting and evaluation"},
+  "release": {"repository": "https://github.com/liaorunqing/CoMLC-MI"}
+}

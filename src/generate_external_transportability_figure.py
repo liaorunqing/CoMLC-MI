@@ -21,14 +21,14 @@ import pandas as pd
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RESULT_DIR = ROOT / "output" / "revision_r1" / "external_transportability"
+RESULT_DIR = ROOT / "output" / "benchmark" / "external_transportability"
 FIGURE_DIR = ROOT / "figures" / "r1"
 
 TABPFN = "#2166AC"
 LOGISTIC = "#4D4D4D"
 ACCENT = "#D55E00"
 GRID = "#D9D9D9"
-MODEL_COLORS = {"TabPFN v2": TABPFN, "Logistic regression": LOGISTIC}
+MODEL_COLORS = {"TabPFN-3": TABPFN, "Logistic regression": LOGISTIC}
 
 mpl.rcParams.update(
     {
@@ -87,14 +87,14 @@ def make_figure() -> plt.Figure:
     ax_calibration = fig.add_subplot(grid[:, 1])
 
     # a, discrimination with percentile bootstrap intervals.
-    y_positions = {("AUROC", "TabPFN v2"): 3.15, ("AUROC", "Logistic regression"): 2.75,
-                   ("AUPRC", "TabPFN v2"): 1.45, ("AUPRC", "Logistic regression"): 1.05}
+    y_positions = {("AUROC", "TabPFN-3"): 3.15, ("AUROC", "Logistic regression"): 2.75,
+                   ("AUPRC", "TabPFN-3"): 1.45, ("AUPRC", "Logistic regression"): 1.05}
     metric_fields = {
         "AUROC": ("auc", "auc_ci_low", "auc_ci_high"),
         "AUPRC": ("auprc", "auprc_ci_low", "auprc_ci_high"),
     }
     for label, fields in metric_fields.items():
-        for model in ("TabPFN v2", "Logistic regression"):
+        for model in ("TabPFN-3", "Logistic regression"):
             estimate, low, high = (float(external.loc[model, field]) for field in fields)
             y = y_positions[(label, model)]
             ax_discrimination.errorbar(
@@ -124,7 +124,7 @@ def make_figure() -> plt.Figure:
 
     # b, reliability curve. Each point is one equal-frequency risk decile.
     ax_calibration.plot([0, 0.40], [0, 0.40], color="#7F7F7F", linestyle="--", linewidth=1.0, label="Ideal")
-    for model in ("TabPFN v2", "Logistic regression"):
+    for model in ("TabPFN-3", "Logistic regression"):
         model_bins = reliability.loc[reliability["model"].eq(model)].sort_values("bin")
         low, high = wilson_interval(model_bins["events"].to_numpy(), model_bins["n"].to_numpy())
         observed = model_bins["observed_rate"].to_numpy()
@@ -133,7 +133,7 @@ def make_figure() -> plt.Figure:
             observed,
             yerr=np.vstack([observed - low, high - observed]),
             color=MODEL_COLORS[model],
-            marker="o" if model == "TabPFN v2" else "s",
+            marker="o" if model == "TabPFN-3" else "s",
             markersize=3.5,
             linewidth=1.25,
             capsize=1.7,
@@ -152,7 +152,7 @@ def make_figure() -> plt.Figure:
     # c, proper scoring and calibration error; lower values are better.
     x = np.array([0, 1], dtype=float)
     width = 0.31
-    for offset, model in zip((-width / 2, width / 2), ("TabPFN v2", "Logistic regression")):
+    for offset, model in zip((-width / 2, width / 2), ("TabPFN-3", "Logistic regression")):
         values = [external.loc[model, "brier"], external.loc[model, "ece"]]
         bars = ax_error.bar(
             x + offset,

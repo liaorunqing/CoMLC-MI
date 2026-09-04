@@ -1,4 +1,4 @@
-"""Generate LaTeX result fragments directly from the locked R1 CSV outputs."""
+"""Generate LaTeX result fragments directly from benchmark CSV outputs."""
 
 from __future__ import annotations
 
@@ -18,12 +18,12 @@ DISPLAY_NAMES = {
     "BR-CatBoost": "BR--CatBoost",
     "ECC-LightGBM": "ECC--LightGBM",
     "LP-RF": "LP--RF",
-    "RAkEL-RF": "RAkEL--RF",
+    "RAkELd-RF": "RAkELd--RF",
     "Shared-MLP": "Shared MLP",
     "MultiTask-DNN": "Multitask DNN",
-    "TabPFN": "TabPFN v2",
-    "Ensemble-LP-RF-TabPFN-Equal": "LP--RF--TabPFN v2 (equal)",
-    "Ensemble-LP-RF-TabPFN-Weighted": "LP--RF--TabPFN v2 (inner-OOF weighted)",
+    "TabPFN": "TabPFN-3",
+    "Ensemble-LP-RF-TabPFN-Equal": "LP--RF--TabPFN-3 (equal)",
+    "Ensemble-LP-RF-TabPFN-Weighted": "LP--RF--TabPFN-3 (inner-OOF weighted)",
 }
 
 LABEL_DISPLAY = {
@@ -93,7 +93,7 @@ def write_primary_macros(results_dir: Path, output_dir: Path) -> None:
         f"\\newcommand{{\\RTabMacroAUC}}{{{best_single.macro_auroc:.4f}}}",
         f"\\newcommand{{\\REnsMacroAUC}}{{{ensemble.macro_auroc:.4f}}}",
         f"\\newcommand{{\\REnsMacroAUPRC}}{{{ensemble.macro_auprc:.4f}}}",
-        f"\\newcommand{{\\RMacroDiff}}{{{macro_difference.mean_bootstrap_difference:.4f}}}",
+        f"\\newcommand{{\\RMacroDiff}}{{{macro_difference.estimate:.4f}}}",
         f"\\newcommand{{\\RMacroDiffLow}}{{{macro_difference.ci_low:.4f}}}",
         f"\\newcommand{{\\RMacroDiffHigh}}{{{macro_difference.ci_high:.4f}}}",
         f"\\newcommand{{\\RBHSignificant}}{{{significant}}}",
@@ -146,7 +146,7 @@ def write_temporal_table(results_dir: Path, output_dir: Path) -> None:
 
 def write_synthetic_table(results_dir: Path, output_dir: Path) -> None:
     frame = pd.read_csv(results_dir / "synthetic" / "controlled_dependency_summary.csv")
-    models = ["BR", "CC", "ML-KNN", "GCN"]
+    models = ["BR", "CC", "BR-kNN (distance-weighted, k=10)", "GCN"]
     rows = []
     for rho, group in frame.groupby("rho", sort=True):
         indexed = group.set_index("model")
@@ -162,7 +162,7 @@ def write_synthetic_table(results_dir: Path, output_dir: Path) -> None:
         r"\caption{Controlled dependency experiment over ten paired datasets per setting. LDS, label density, true-score AUC, and model Macro-AUROC are means across repetitions.}",
         r"\label{tab:synthetic_r1}", r"\small",
         r"\begin{tabular}{rrrrrrrr}", r"\toprule",
-        r"Residual $\rho$ & Realized LDS & LD & True-score AUC & BR & CC & ML-KNN & GCN \\",
+        r"Residual $\rho$ & Realized LDS & LD & True-score AUC & BR & CC & BR-kNN & GCN \\",
         r"\midrule", *rows, r"\bottomrule", r"\end{tabular}", r"\end{table*}",
     ]
     (output_dir / "table_synthetic_r1.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -173,7 +173,7 @@ def write_primary_label_table(results_dir: Path, output_dir: Path) -> None:
     intervals = pd.read_csv(results_dir / "primary_per_label_bootstrap.csv").set_index("label")
     lines = [
         r"\begin{table*}[!t]", r"\centering",
-        r"\caption{Primary per-label comparison: inner-OOF-weighted LP--RF--TabPFN v2 ensemble minus TabPFN v2. Intervals use 2,000 paired patient bootstraps; $q$ is Benjamini--Hochberg adjusted across 12 labels.}",
+        r"\caption{Primary per-label comparison: inner-OOF-weighted LP--RF--TabPFN-3 ensemble minus TabPFN-3. Intervals use 2,000 paired patient bootstraps; $q$ is Benjamini--Hochberg adjusted across 12 labels.}",
         r"\label{tab:primary_labels_r1}", r"\scriptsize",
         r"\setlength{\tabcolsep}{3pt}", r"\resizebox{\textwidth}{!}{%",
         r"\begin{tabular}{lrrlrrl}", r"\toprule",
@@ -196,7 +196,7 @@ def write_calibration_table(results_dir: Path, output_dir: Path) -> None:
     models = ["TabPFN", "Ensemble-LP-RF-TabPFN-Weighted"]
     lines = [
         r"\begin{table}[!t]", r"\centering",
-        r"\caption{Internal calibration summary from mean repeated OOF predictions. Intercept and slope are medians over labels with at least 30 events; complete per-label bootstrap intervals are in the supplement.}",
+        r"\caption{Internal calibration summary from mean repeated OOF predictions. Intercept and slope are fitted simultaneously and summarized as medians over labels with at least 30 events; complete per-label bootstrap intervals are in Appendix C.}",
         r"\label{tab:calibration_r1}", r"\small",
         r"\resizebox{\columnwidth}{!}{%",
         r"\begin{tabular}{lrrrr}", r"\toprule",
@@ -267,7 +267,8 @@ def write_manuscript_facts(results_dir: Path, output_dir: Path) -> None:
             "weighted_ensemble": metric_payload("Ensemble-LP-RF-TabPFN-Weighted"),
             "primary_difference": {
                 metric: {
-                    "mean": float(row.mean_bootstrap_difference),
+                    "estimate": float(row.estimate),
+                    "bootstrap_mean": float(row.mean_bootstrap_difference),
                     "ci_low": float(row.ci_low),
                     "ci_high": float(row.ci_high),
                 }
@@ -303,7 +304,7 @@ def write_manuscript_facts(results_dir: Path, output_dir: Path) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--results-dir", type=Path, default=Path("output/revision_r1"))
+    parser.add_argument("--results-dir", type=Path, default=Path("output/benchmark"))
     parser.add_argument("--output-dir", type=Path, default=Path("paper/generated_r1"))
     return parser.parse_args()
 

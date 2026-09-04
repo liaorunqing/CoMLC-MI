@@ -37,10 +37,10 @@ FIGURE_NAMES = {
     "BR-CatBoost": "BR–CatBoost",
     "ECC-LightGBM": "ECC–LightGBM",
     "LP-RF": "LP–RF",
-    "RAkEL-RF": "RAkEL–RF",
+    "RAkELd-RF": "RAkELd–RF",
     "Shared-MLP": "Shared MLP",
     "MultiTask-DNN": "Multitask DNN",
-    "TabPFN": "TabPFN v2",
+    "TabPFN": "TabPFN-3",
     "Ensemble-LP-RF-TabPFN-Equal": "Ensemble (equal)",
     "Ensemble-LP-RF-TabPFN-Weighted": "Ensemble (inner-OOF weighted)",
 }
@@ -126,7 +126,7 @@ def workflow_figure(output_dir: Path) -> None:
     ax.text(0.01, 0.97, "a", fontweight="bold", fontsize=9, va="top")
     ax.text(0.05, 0.97, "Internal 12-label benchmark: every decision stays inside the outer training fold", fontweight="bold", fontsize=8, va="top")
 
-    _box(ax, 0.03, 0.76, 0.14, 0.11, "1,700 patients\n91 admission-safe\nfeatures; 12 labels", COLORS["light_blue"])
+    _box(ax, 0.03, 0.76, 0.14, 0.11, "1,700 patients\n91 admission-stage\nfeatures; 12 labels", COLORS["light_blue"])
     _box(ax, 0.23, 0.76, 0.14, 0.11, "5 repeats ×\n5 outer folds", COLORS["light_blue"])
     _box(ax, 0.43, 0.76, 0.20, 0.11, "Outer training patients\nPreprocessing fit here only", COLORS["light_teal"])
     _box(ax, 0.72, 0.76, 0.20, 0.11, "Outer test patients\nPredictions only; never used\nfor fitting or decisions", "#FCE8E6", COLORS["red"])
@@ -158,7 +158,7 @@ def workflow_figure(output_dir: Path) -> None:
     ax.text(
         0.50,
         0.275,
-        "Key locked settings are shown; complete model hyperparameters are reported in Methods and Supplementary Table S3.",
+        "Key locked settings are shown; complete model hyperparameters are reported in Methods and Appendix B.",
         ha="center",
         va="center",
         fontsize=5.2,
@@ -169,7 +169,7 @@ def workflow_figure(output_dir: Path) -> None:
     ax.text(0.01, 0.22, "b", fontweight="bold", fontsize=9, va="top")
     ax.text(0.05, 0.22, "Separate cross-cohort mortality transportability stress test", fontweight="bold", fontsize=8, va="top")
     _box(ax, 0.07, 0.045, 0.21, 0.11, "Krasnoyarsk source\n4 shared admission variables;\nin-hospital death", COLORS["light_teal"])
-    _box(ax, 0.39, 0.045, 0.21, 0.11, "Fit source-only TabPFN v2\nand logistic regression\n(no external tuning)", COLORS["light_gold"])
+    _box(ax, 0.39, 0.045, 0.21, 0.11, "Fit source-only TabPFN-3\nand logistic regression\n(no external tuning)", COLORS["light_gold"])
     _box(ax, 0.71, 0.045, 0.23, 0.11, "29,596 Hungarian index events\n30-day mortality primary;\n7-day/complete-case sensitivity", COLORS["light_blue"])
     _arrow(ax, (0.28, 0.10), (0.39, 0.10))
     _arrow(ax, (0.60, 0.10), (0.71, 0.10))
@@ -178,7 +178,7 @@ def workflow_figure(output_dir: Path) -> None:
 
 def cooccurrence_figure(results_dir: Path, output_dir: Path) -> None:
     """Square full-cohort descriptive conditional co-occurrence matrix."""
-    config_path = Path("configs/access_2026_35668_r1.json")
+    config_path = Path("configs/comlc_mi_benchmark.json")
     config = json.loads(config_path.read_text(encoding="utf-8"))
     data = pd.read_csv(config["dataset"])
     outcomes = prepare_outcomes(data).to_numpy(dtype=np.int8)
@@ -303,7 +303,7 @@ def calibration_figure(results_dir: Path, output_dir: Path) -> None:
     bins = pd.read_csv(results_dir / "internal_calibration_bins.csv")
     models = ["TabPFN", ENSEMBLE_WEIGHTED]
     labels = per_label["label"].drop_duplicates().tolist()
-    short_names = {"TabPFN": "TabPFN v2", ENSEMBLE_WEIGHTED: "Weighted ensemble"}
+    short_names = {"TabPFN": "TabPFN-3", ENSEMBLE_WEIGHTED: "Weighted ensemble"}
     palette = {"TabPFN": COLORS["blue"], ENSEMBLE_WEIGHTED: COLORS["teal"]}
     fig = plt.figure(figsize=(7.15, 5.15))
     grid = fig.add_gridspec(
@@ -355,6 +355,53 @@ def calibration_figure(results_dir: Path, output_dir: Path) -> None:
     axes[2].legend(loc="upper left", frameon=False, fontsize=5.5)
     fig.suptitle("Internal calibration audit (n = 1,700 patients; 12 outcomes)", y=0.995, fontsize=9, fontweight="bold")
     save_publication_figure(fig, output_dir / "fig_internal_calibration")
+
+
+def calibration_small_multiples(results_dir: Path, output_dir: Path) -> None:
+    """Twelve label-specific reliability panels for the three calibration comparators."""
+    primary = pd.read_csv(results_dir / "internal_calibration_bins.csv")
+    unweighted = pd.read_csv(results_dir / "calibration_sensitivity_unweighted_lr_bins.csv")
+    bins = pd.concat([primary, unweighted], ignore_index=True)
+    models = ["TabPFN", ENSEMBLE_WEIGHTED, "BR-LR-unweighted"]
+    names = {
+        "TabPFN": "TabPFN-3",
+        ENSEMBLE_WEIGHTED: "Weighted ensemble",
+        "BR-LR-unweighted": "Unweighted BR-LR",
+    }
+    palette = {
+        "TabPFN": COLORS["blue"],
+        ENSEMBLE_WEIGHTED: COLORS["teal"],
+        "BR-LR-unweighted": COLORS["orange"],
+    }
+    per_label = pd.read_csv(results_dir / "internal_per_label_metrics.csv")
+    event_counts = per_label.query("model == 'TabPFN'").set_index("label")["positive_n"].to_dict()
+    fig, axes = plt.subplots(3, 4, figsize=(7.15, 6.1), constrained_layout=True)
+    for ax, label in zip(axes.ravel(), LABEL_COLS):
+        upper = 0.0
+        for model in models:
+            subset = bins[(bins["model"] == model) & (bins["label"] == label)].sort_values("bin")
+            ax.plot(
+                subset["mean_predicted"], subset["observed_rate"],
+                marker="o", markersize=2.3, linewidth=0.85,
+                color=palette[model], label=names[model],
+            )
+            if len(subset):
+                upper = max(upper, float(subset[["mean_predicted", "observed_rate"]].to_numpy().max()))
+        upper = max(upper * 1.08, 0.08)
+        ax.plot([0, upper], [0, upper], "--", color=COLORS["gray"], linewidth=0.65)
+        ax.set_xlim(0, upper)
+        ax.set_ylim(0, upper)
+        ax.set_aspect("equal", adjustable="box")
+        ax.grid(color="#E5E7EB", linewidth=0.45)
+        ax.set_title(f"{LABEL_DISPLAY[label]} ($n_+$={event_counts[label]})", fontsize=6.5, fontweight="bold")
+    for ax in axes[-1, :]:
+        ax.set_xlabel("Predicted", fontsize=6)
+    for ax in axes[:, 0]:
+        ax.set_ylabel("Observed", fontsize=6)
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 1.025), ncol=3, frameon=False)
+    fig.suptitle("Outcome-specific calibration from equal-frequency deciles (n = 1,700)", fontsize=9, fontweight="bold", y=1.055)
+    save_publication_figure(fig, output_dir / "fig_calibration_small_multiples")
 
 
 def gcn_figure(results_dir: Path, output_dir: Path) -> None:
@@ -430,7 +477,7 @@ def temporal_figure(results_dir: Path, output_dir: Path) -> None:
 def synthetic_figure(results_dir: Path, output_dir: Path) -> None:
     frame = pd.read_csv(results_dir / "synthetic" / "controlled_dependency_summary.csv")
     fig, ax = plt.subplots(figsize=(3.45, 2.75))
-    palette = {"BR": COLORS["blue"], "CC": COLORS["orange"], "ML-KNN": COLORS["gray"], "GCN": COLORS["teal"]}
+    palette = {"BR": COLORS["blue"], "CC": COLORS["orange"], "BR-kNN (distance-weighted, k=10)": COLORS["gray"], "GCN": COLORS["teal"]}
     for model, subset in frame.groupby("model"):
         subset = subset.sort_values("realized_lds_mean")
         ax.errorbar(
@@ -455,7 +502,7 @@ def synthetic_figure(results_dir: Path, output_dir: Path) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--results-dir", type=Path, default=Path("output/revision_r1"))
+    parser.add_argument("--results-dir", type=Path, default=Path("output/benchmark"))
     parser.add_argument("--output-dir", type=Path, default=Path("figures/r1"))
     parser.add_argument("--workflow-only", action="store_true")
     return parser.parse_args()
@@ -470,6 +517,7 @@ def main() -> None:
     model_performance_figure(args.results_dir, args.output_dir)
     forest_figure(args.results_dir, args.output_dir)
     calibration_figure(args.results_dir, args.output_dir)
+    calibration_small_multiples(args.results_dir, args.output_dir)
     gcn_figure(args.results_dir, args.output_dir)
     temporal_figure(args.results_dir, args.output_dir)
     synthetic_figure(args.results_dir, args.output_dir)

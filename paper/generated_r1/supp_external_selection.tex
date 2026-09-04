@@ -1,0 +1,18 @@
+\begin{center}
+\captionof{table}{Hungarian registry case selection and endpoint accounting.}\label{tab:supp_external_selection}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrl}
+\toprule
+Cohort/analysis set & $n$ & Deaths & Rule \\
+\midrule
+All AMI event records in released registry & 30883 & \NA & Starting event-level extract \\
+Independent index-event cohort & 29596 & 3888 & Event number = 1; Study ID not used \\
+Excluded non-index event rows & 1287 & \NA & Event number not equal to 1 \\
+30-day primary endpoint, all index events & 29596 & 3888 & All-cause death on days 0--30 \\
+30-day complete-case sensitivity & 28477 & 3465 & 1119 rows excluded for any mapped-feature missingness \\
+7-day endpoint, all index events & 29596 & 2408 & All-cause death on days 0--7 \\
+7-day complete-case sensitivity & 28477 & 2118 & Same complete-case mask as 30-day analysis \\
+\bottomrule
+\end{tabular}%
+}
+\end{center}

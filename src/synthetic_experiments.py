@@ -44,7 +44,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
 OUTPUT_DIR = os.path.join(PROJECT_DIR, "output", "synthetic_controlled")
 RANDOM_SEED = 42
-MODEL_NAMES = ("BR", "CC", "ML-KNN", "GCN")
+MODEL_NAMES = ("BR", "CC", "BR-kNN (distance-weighted, k=10)", "GCN")
 
 
 @dataclass(frozen=True)
@@ -198,7 +198,7 @@ def evaluate_model(
             train_history = np.column_stack((train_history, y_train[:, label_index]))
             test_history = np.column_stack((test_history, current))
 
-    elif model_name == "ML-KNN":
+    elif model_name == "BR-kNN (distance-weighted, k=10)":
         for label_index in range(n_labels):
             classifier = KNeighborsClassifier(n_neighbors=10, weights="distance")
             classifier.fit(x_train, y_train[:, label_index])

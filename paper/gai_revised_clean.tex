@@ -1,0 +1,685 @@
+\documentclass{ieeeaccess}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{longtable,array}
+\usepackage{caption}
+\usepackage{bm}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue,bookmarks=false]{hyperref}
+\usepackage{placeins}
+
+% Keep wide results figures with surrounding text instead of accumulating
+% them on float-only pages. The IEEE class otherwise leaves large blank areas
+% when several two-column floats occur in succession.
+\renewcommand{\dbltopfraction}{0.90}
+\renewcommand{\dblfloatpagefraction}{0.85}
+\renewcommand{\textfraction}{0.06}
+\setcounter{dbltopnumber}{2}
+\setlength{\dbltextfloatsep}{10pt plus 2pt minus 2pt}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\newcommand{\NA}{--}
+
+\begin{document}
+
+\history{Date of publication xxxx 00, 0000, date of current version xxxx 00, 0000.}
+\doi{10.1109/ACCESS.2026.XXXXXXX}
+
+\title{A Dependency-Aware Multi-Label Benchmark for Myocardial Infarction Complication Prediction: Statistical Validation and Calibration}
+
+\author{\uppercase{Runqing Liao}\authorrefmark{1}, \uppercase{Xiaopeng Yang}\authorrefmark{1}, and \uppercase{Zhining Wang}\authorrefmark{1}}
+
+\address[1]{School of Mathematics and Statistics, Hanshan Normal University, Chaozhou 521041, China}
+
+\tfootnote{This work was supported by the National Natural Science Foundation of China under Grant 12271132, and the fund provided by the Department of Education of Guangdong Province, China under Grant 2024ZDZX1027.}
+
+\markboth
+{R. Liao \headeretal: A Dependency-Aware Multi-Label Benchmark for Myocardial Infarction Complication Prediction}
+{R. Liao \headeretal: A Dependency-Aware Multi-Label Benchmark for Myocardial Infarction Complication Prediction}
+
+\corresp{Corresponding author: Zhining Wang (e-mail: mathwangzhining@163.com).}
+
+\begin{abstract}
+Predicting complications after myocardial infarction matters, but the value of explicit label-dependency modeling on small clinical tables remains uncertain. We evaluated ten model families for 12 outcomes in 1,700 patients from the 1992--1995 Krasnoyarsk Myocardial Infarction Complications Database. The primary analysis used 91 variables defined by the source dictionary as admission-stage information, five repeats of five outer multilabel-stratified folds, and four inner folds; preprocessing, feature selection, stopping decisions, and ensemble weights were fitted without access to outer-test data. LP--RF was the strongest single model by Macro-AUROC (0.7138). An inner-OOF-weighted LP--RF--TabPFN-3 ensemble reached 0.7192 and exceeded TabPFN-3 by a plug-in difference of 0.0246 (95\% patient-bootstrap CI 0.0144--0.0352); three label-wise differences survived Benjamini--Hochberg correction. This gain involved a trade-off: TabPFN-3 had lower Brier score (0.0615 versus 0.0619), lower 10-bin expected calibration error (0.0153 versus 0.0209), and higher fixed-threshold Macro-F1. Across ten paired seeds on one fixed partition, tested label-graph configurations did not support a positive gain; controlled simulations likewise did not support a universal label-dependency-score threshold. A cross-cohort mortality transportability stress test used four shared variables in 29,596 Hungarian index events from 2018--2019, including 3,888 deaths within 30 days. Logistic regression discriminated slightly better than TabPFN-3 (AUROC 0.705 versus 0.696), whereas TabPFN-3 had lower probability error; both overpredicted risk. This external analysis does not validate the other 11 outcomes or the dependency framework. Contemporary outcome-complete validation, recalibration, and decision-utility assessment remain necessary before clinical use.
+\end{abstract}
+
+\begin{keywords}
+calibration, DeLong test, label dependency, multi-label classification, TabPFN-3
+\end{keywords}
+
+\titlepgskip=-21pt
+\maketitle
+\raggedbottom
+
+%=============================================================================
+\section{Introduction}
+\label{sec:introduction}
+%=============================================================================
+
+\PARstart{P}{atients} admitted to hospital with confirmed myocardial infarction may develop several adverse events during the index hospitalization, including atrial fibrillation, pulmonary edema, and chronic heart failure. These outcomes can influence treatment decisions and may be partially interdependent. A natural formulation is therefore a multi-label prediction problem, where the outcome space has internal structure. Recent work on the same public database has considered both multi-label transformations and multitask neural learning \cite{elashmawi2024,makhmudov2025}, but the choice of dependency-aware architecture has not been preceded by a quantitative analysis of whether the observed label structure warrants the added complexity.
+
+This mismatch between method choice and data structure is especially important in clinical prediction, where incomplete validation and absent calibration assessment are common and performance may not transfer reliably to a new clinical setting \cite{christodoulou2019,futoma2020}. Three questions remain insufficiently addressed in the existing literature.
+
+First, does treating MI complications as a multi-label problem, rather than as separate binary tasks, improve clinical prediction, and under what conditions? Although BR, CC, LP, and RAkEL-D have been compared on this database \cite{elashmawi2024}, the observed label dependency structure has not been quantified jointly with a wider set of independent, neural, graph-based, and foundation-model baselines.
+
+Second, graph-based multi-label methods such as GCNs assume that label co-occurrence contains predictive information beyond that already encoded by the inputs \cite{chen2019mlgcn,wang2020}. In the full Krasnoyarsk cohort, the binary outcomes have low cardinality (0.953) and a median directed conditional co-occurrence of 0.065. These values are descriptive; graph construction within validation uses training-fold labels only. Whether an explicit label graph helps under this sparse outcome structure is an empirical question, and a scalar co-occurrence summary cannot establish a universal transition point.
+
+Third, a point estimate of AUC alone does not establish that one clinical prediction model is reliably better than another, and discrimination does not establish calibration \cite{vancalster2019,christodoulou2019}. Twelve outcomes with markedly different positive counts require label-specific evaluation because both discrimination and calibration can be unstable for rare endpoints.
+
+To address these questions together, we build a dependency-aware multi-label benchmark around the Krasnoyarsk database. It combines fold-local label-space diagnostics, comparison of ten model families spanning independent, transformation-based, neural, and foundation-model approaches, and five repeats of five outer folds with per-label discrimination, calibration, paired tests, Benjamini--Hochberg (BH) false-discovery-rate correction, and patient-level bootstrap intervals. The workflow is reusable as an evaluation protocol, while its numerical findings remain cohort-specific.
+
+Our contributions are fourfold. First, we define LDS explicitly as mean directed conditional co-occurrence and report it together with prevalence-adjusted pairwise correlation, making its interpretation and limitations transparent. Second, we compare independent, transformation-based, ensemble, neural, graph, and foundation-model approaches under shared repeated outer folds and a nested decision protocol. Third, we redesign the synthetic analysis so that marginal prevalence, feature map, and univariate signal strength are controlled while residual dependence changes. This analysis tests whether method rankings vary with dependence without presupposing a threshold. Fourth, we add a deliberately bounded contemporary mortality transportability stress test using only four admission-time variables that can be mapped to a nationwide Hungarian registry cohort.
+
+Fig.~\ref{fig:framework} shows an overview of the four-stage framework.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth,keepaspectratio]{figures/r1/fig1_nested_workflow.pdf}
+\caption{Nested internal validation and cross-cohort data-use boundaries. (a) Five repeats of five outer folds provide one OOF prediction per patient and repeat. All preprocessing, TabPFN feature selection, ensemble weighting, and training-round decisions remain inside the outer training fold; four inner folds generate the required decisions. (b) The separate mortality transportability stress test fits four-feature source models before applying them to Hungarian index events without external tuning or recalibration.}\label{fig:framework}
+\end{figure*}
+
+The paper is organized as follows. Section~II reviews the relevant multi-label and clinical prediction literature. Section~III describes the datasets and preprocessing. Section~IV develops the benchmark framework---problem formulation, dependency metrics, model families, statistical verification, and the mortality transportability stress test. Section~V presents the synthetic, clinical benchmark, ablation, significance, calibration, temporal, and transportability results. Section~VI discusses the implications, and Section~VII concludes.
+
+%=============================================================================
+\section{Related Work}
+\label{sec:related}
+%=============================================================================
+
+\subsection{Multi-Label Classification}
+
+The multi-label learning literature organizes methods by how much they model the joint label distribution \cite{zhang2014,gibaja2015}. At one end, Binary Relevance (BR) trains $L$ independent classifiers and ignores any label interaction; at the other, Label Powerset (LP) treats every distinct label combination as a separate class, capturing the full joint distribution but fragmenting the training data combinatorially \cite{tsoumakas2007b}. Between these extremes, Classifier Chains (CC) propagate predictions along a random ordering to introduce directed dependency \cite{read2011}, while Random $k$-Labelsets (RAkEL) builds an ensemble of LP classifiers over random label subsets, trading completeness for tractability \cite{tsoumakas2007}.
+
+Graph convolutional networks entered multi-label classification more recently by constructing a label co-occurrence graph and performing message passing to enrich label-specific representations \cite{chen2019mlgcn,wang2020}. These methods were developed largely on densely annotated image benchmarks. Their behaviour on a small clinical table with low label cardinality and weak pairwise outcome associations is therefore an empirical question rather than a consequence of results from those domains. This gap motivates the controlled graph ablation in Section~IV.
+
+\subsection{Clinical Prediction with Machine Learning}
+
+Several groups have applied machine learning to MI complication prediction on the Krasnoyarsk database. Elashmawi et al. \cite{elashmawi2024} compared BR, CC, LP, and RAkEL-D using threshold-dependent multi-label metrics. Makhmudov et al. \cite{makhmudov2025} developed a multitask neural network for simultaneous complication and mortality-cause prediction. Zhang et al. \cite{jia2025} constructed patient-similarity graphs for node classification on this and another coronary-artery-disease dataset. These studies establish the relevance of multi-output and graph formulations, but do not jointly provide label-space diagnostics, a common ten-family benchmark, temporal sensitivity analysis, paired multiplicity-controlled tests, and probability calibration.
+
+More broadly, systematic reviews of clinical prediction studies have documented frequent risks of validation bias and limited reporting of calibration \cite{christodoulou2019}; concerns about transportability across institutions and populations remain equally important \cite{futoma2020}. Pre-trained tabular foundation models have added a new reference point for small clinical tables \cite{hollmann2025}. Our verified environment used TabPFN-3 through \texttt{tabpfn==8.0.1} and its default version-3 classifier checkpoint \cite{tabpfn3report}; we compare it under the same repeated outer folds, outcome definitions, and metrics as task-specific alternatives.
+
+%=============================================================================
+\section{Dataset and Preprocessing}
+\label{sec:dataset}
+%=============================================================================
+
+\subsection{Data Source and Feature Groups}
+
+The Krasnoyarsk Myocardial Infarction Complications Database was collected at Interdistrict Clinical Hospital No.~20 in Krasnoyarsk, Russia, between 1992 and 1995 and was released as a public UCI dataset in 2020 \cite{uci2020}. It contains 1,700 patients with a confirmed primary diagnosis of myocardial infarction. We selected it because it is a public patient-level benchmark with a fixed set of 12 simultaneously recorded complications, substantial missingness, and variables collected over several early-hospital intervals, allowing reproducible comparison of multi-label methods. Its age is also a central limitation: the cohort predates routine percutaneous coronary intervention, contemporary antiplatelet regimens, high-intensity statins, and current diagnostic practice. We therefore use it for methodological benchmarking and do not interpret its absolute risks or feature effects as estimates for contemporary care.
+
+The raw table contains 109 measured candidate predictors after excluding the identifier and two variables with more than 95\% missingness. The formal primary contract, \texttt{admission\_safe\_v1}, retains 89 measured variables located in the source dictionary's admission-use block and adds two training-fold-generated missingness indicators, for 91 inputs. We call this source-dictionary-defined admission-stage information rather than strict pretreatment information: seven fibrinolysis fields are retained under the dictionary rule, but exact treatment timestamps are unavailable. Nine hospital-interval count variables and 11 treatment variables whose timing is not sufficiently defined are excluded from the primary analysis. Eight invalid post-standardization interactions are removed from every reported result. Appendix~\ref{app:features} provides the complete contract and temporal-evidence table.
+
+The accumulated-information sensitivity horizons contain 91, 94, 97, and 100 variables at admission, 24, 48, and 72 hours, respectively. At each step, only the corresponding three interval-count variables are added. The 111-variable source-dictionary set (109 measured variables plus two missingness indicators) is retained only as a retrospective complete-information definition, not as the primary prediction setting. The complete inclusion and exclusion lists appear in Appendix~\ref{app:features} and are encoded in the released configuration.
+
+For a bounded contemporary transportability analysis, we used the public Hungarian Myocardial Infarction Registry extracted database deposited in Mendeley Data \cite{almurshedi2026data}. Its associated version-of-record cohort report describes 30,883 AMI events recorded nationwide from January 2018 through December 2019, of which 29,596 were unique-patient index events \cite{balint2026}. We selected the 29,596 records with \texttt{Event number = 1}; the unreliable \texttt{Study ID} field was not used for deduplication or clustering. This external dataset does not contain harmonized versions of all 12 source outcomes or the primary internal feature set, so it is used only for a reduced cross-cohort mortality transportability stress test.
+
+\begin{table}[ht]
+\caption{Feature Groups and Temporal Availability}
+\label{tab:features}
+\centering
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcr}
+\toprule
+\textbf{Feature Group} & \textbf{Count} & \textbf{Available at} \\
+\midrule
+Source-dictionary admission-stage variables & 89 & Admission record \\
+Missingness indicators & 2 & Generated within training fold \\
+\midrule
+\textbf{Primary admission-stage contract} & \textbf{91} & Admission record \\
+First interval count variables & 3 & 24 h sensitivity \\
+Second interval count variables & 3 & 48 h sensitivity \\
+Third interval count variables & 3 & 72 h sensitivity \\
+Timing-ambiguous inpatient variables & 11 & Excluded from primary analysis \\
+Invalid post-standardization interactions & 8 & Removed from all revised analyses \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\subsection{Label Statistics and Co-occurrence}
+
+There are twelve source-defined complication labels (Table~\ref{tab:labels}). For the first 11 outcomes, a value of one indicates that the complication was recorded during the index hospitalization. The raw lethal-outcome variable uses zero for no coded lethal cause and values 1--7 for cardiogenic shock, pulmonary edema, myocardial rupture, progressive congestive heart failure, thromboembolism, asystole, and ventricular fibrillation; it is converted to a binary endpoint using $\mathrm{LET\_IS}>0$. This conversion is performed before every label-space metric is calculated. The source provides neither event-onset timestamps nor a competing-risk process, so admission-present manifestations cannot always be separated from incident complications. Dressler syndrome and post-infarction angina may manifest beyond the earliest observation window, and the chronic-heart-failure outcome can overlap clinically with baseline heart-failure history. Results are therefore interpreted as prediction of source-coded hospitalization outcomes rather than definitive early incident diagnoses.
+
+\begin{table}[ht]
+\caption{Complication Labels, Abbreviations, Positive Counts, and Prevalence}
+\label{tab:labels}
+\centering
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcrr}
+\toprule
+\textbf{Complication} & \textbf{Code} & \textbf{Positive} & \textbf{Prevalence (\%)} \\
+\midrule
+Atrial fibrillation & AF & 170 & 10.0 \\
+Supraventricular tachycardia & SVT & 20 & 1.2 \\
+Ventricular tachycardia & VT & 42 & 2.5 \\
+Ventricular fibrillation & VF & 71 & 4.2 \\
+Third-degree AV block & AVB & 57 & 3.4 \\
+Pulmonary edema & PulEd & 159 & 9.4 \\
+Myocardial rupture & Rupt & 54 & 3.2 \\
+Dressler syndrome & Dress & 75 & 4.4 \\
+Chronic heart failure & CHF & 394 & 23.2 \\
+Recurrent myocardial infarction & ReMI & 159 & 9.4 \\
+Post-infarction angina & PIA & 148 & 8.7 \\
+Lethal outcome & Leth & 271 & 15.9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+After binary conversion, the full cohort has $\mathrm{LC}=0.953$, $\mathrm{LD}=0.079$, $\mathrm{LDS}=0.103$, median directed conditional co-occurrence 0.065, mean signed phi correlation 0.0217, and mean absolute phi correlation 0.0494. These full-cohort quantities are descriptive only. Within each model fit, every label statistic and graph adjacency is recalculated from the corresponding training fold; outer-test labels are never used to construct a graph or select an architecture. The conditional matrix is sparse and asymmetric (Fig.~\ref{fig:cooccurrence}), but these values do not, by themselves, imply that a particular architecture will or will not perform well.
+
+\Figure[ht](topskip=0pt, botskip=4pt, midskip=0pt){figures/r1/fig_cooccurrence.pdf}
+{Asymmetric label conditional probability matrix $P(\text{column} \mid \text{row})$.\label{fig:cooccurrence}}
+
+\subsection{Missing Data Strategy and Data Splits}
+
+\subsubsection{Missing Value Imputation and Standardization}
+
+Missing values are handled by a tiered strategy fitted anew within every outer and inner training fold. For 13 prespecified moderate- or high-missingness physiological and laboratory variables, iterative imputation uses a 50-tree Random-Forest regressor for at most ten iterations. Remaining nonbinary variables use the training-fold median and binary variables use the training-fold mode. The two EMS blood-pressure indicators are generated from missingness observed in the current rows but require no outcome information. Nonbinary variables are standardized using means and standard deviations fitted on the same training fold. The fitted objects are then applied unchanged to the corresponding validation or test rows. This procedure yields one completed dataset per fold; it is not multiple imputation and is not used for coefficient inference \cite{stekhoven2012}.
+
+\subsubsection{Dataset Partitioning and Usage Rules}
+
+Internal validation uses five repeats of five outer folds with second-order iterative multi-label stratification \cite{sechidis2011}. Within each repeat, every patient appears in exactly one outer test fold and therefore receives one out-of-fold (OOF) prediction. The five patient-level OOF predictions are retained and averaged only after all repeats are complete. All model families use the identical outer folds.
+
+Each outer training set is further partitioned into four iterative multi-label-stratified inner folds. Inner OOF predictions determine the per-label LP-RF--TabPFN ensemble weights; inner validation performance determines CatBoost iterations and the training epochs for the two neural baselines. The final estimator is retrained on the complete outer training fold before predicting the untouched outer test fold. The 80 TabPFN predictors are selected by aggregated Random-Forest importance computed only on the relevant training fold. To make the nested run computationally reproducible, inner TabPFN OOF weight estimation uses two TabPFN ensemble members, whereas each final outer TabPFN model uses eight; both values are fixed in the public configuration. No outer-test row participates in imputation, scaling, feature selection, early stopping, model weighting, or model choice.
+
+\subsubsection{Temporal Prediction Horizon Definition}
+
+Four prospective feature horizons study how risk stratification changes as information accumulates. The admission contract contains 91 variables. The three first-interval counts are added at 24 hours (94 variables), the second trio at 48 hours (97), and the third trio at 72 hours (100). The 11 timing-ambiguous inpatient treatment variables and all eight invalid interactions remain excluded. Later-horizon estimates can reflect treatment response or an evolving complication and are interpreted as accumulated-information risk stratification, not treatment-naive admission prediction.
+
+%=============================================================================
+\section{Dependency-Aware Multi-Label Benchmark Framework}
+\label{sec:framework}
+%=============================================================================
+
+The proposed framework formalizes multi-label clinical prediction into four stages: problem definition, label dependency characterization, model evaluation, and statistical verification with clinical interpretation.
+
+\subsection{Problem Formulation}
+
+Let $\mathcal{D} = \{(\mathbf{x}_n, \mathbf{y}_n)\}_{n=1}^{N}$ denote the patients available in one training fold. In the primary benchmark, each patient is represented by $\mathbf{x}_n \in \mathbb{R}^{91}$ and a binary label vector $\mathbf{y}_n = (y_{n,1}, \ldots, y_{n,L})^\top \in \{0, 1\}^{L}$ with $L = 12$. The task is to learn $h: \mathbb{R}^{91} \to [0, 1]^{12}$ such that $h(\mathbf{x})_l$ estimates $P(y_l = 1 \mid \mathbf{x})$ for information available at admission. Because $N$ changes across outer and inner folds, no single fixed training sample is used for model selection or inference.
+
+Throughout, Macro-AUC—the unweighted mean of per-label areas under the ROC curve—serves as the primary evaluation metric. The choice of the unweighted mean is deliberate: it gives equal weight to rare and common complications, which is clinically appropriate since myocardial rupture and supraventricular tachycardia, despite their low prevalence, carry significant prognostic weight.
+
+\subsection{Label Dependency Characterization}
+
+Before training any model, the framework characterizes the binary training-label matrix $\mathbf{Y} \in \{0, 1\}^{N \times L}$. $\mathrm{LC}$ and $\mathrm{LD}$ follow standard multi-label definitions \cite{tsoumakas2007b,charte2015}; the directed conditional matrix and its scalar mean are used here as descriptive co-occurrence summaries.
+
+\textit{Label Cardinality ($\mathrm{LC}$)} measures the mean number of positive labels per patient:
+\begin{equation}
+\mathrm{LC} = \frac{1}{N}\sum_{n=1}^{N}\sum_{l=1}^{L} y_{n,l}
+\label{eq:lc}
+\end{equation}
+For the full cohort, the descriptive value is $\mathrm{LC} = 0.953$; fold-specific values are calculated from training labels only when required by a model.
+
+\textit{Label Density ($\mathrm{LD}$)} normalizes by the total number of labels:
+\begin{equation}
+\mathrm{LD} = \frac{\mathrm{LC}}{L}
+\label{eq:ld}
+\end{equation}
+The corresponding full-cohort descriptive value is $\mathrm{LD} = 0.079$.
+
+\textit{Label Co-occurrence Matrix} $\mathbf{C} \in \mathbb{R}^{L \times L}$ captures pairwise conditional probabilities:
+\begin{equation}
+C_{ij} = P(y_j = 1 \mid y_i = 1) = \frac{\sum_{n=1}^{N} y_{n,i}y_{n,j}}{\sum_{n=1}^{N} y_{n,i}}, \qquad i\neq j,
+\label{eq:cooc}
+\end{equation}
+with rows having no positive observations defined as zero in implementation. The asymmetry $C_{ij} \neq C_{ji}$ arises because the conditioning-label counts differ. It describes direction in conditional co-occurrence, not causality or temporal order.
+
+\textit{Label Dependency Score ($\mathrm{LDS}$)} is introduced here as the arithmetic mean of all ordered off-diagonal conditional co-occurrences:
+\begin{equation}
+\mathrm{LDS} = \frac{1}{L(L-1)}\sum_{i=1}^{L}\sum_{\substack{j=1 \\ j \neq i}}^{L} C_{ij}
+\label{eq:lds}
+\end{equation}
+$\mathrm{LDS}$ lies in $[0,1]$, but it is prevalence-dependent. Under label independence, $C_{ij}=P(y_j=1)$ rather than zero; therefore $\mathrm{LDS}$ must not be interpreted as a formal independence statistic or compared across cohorts without considering marginal prevalence. We report $\mathrm{LD}$ and mean pairwise phi correlation alongside $\mathrm{LDS}$ for this reason. The full-cohort descriptive $\mathrm{LDS}$ is 0.103; it is not used to select a model.
+
+For a prevalence-adjusted binary association summary, let $n_{ab}^{(ij)}$ count patients with $(y_i=a,y_j=b)$. The pairwise phi coefficient and its signed and absolute means are
+\begin{equation}
+\begin{aligned}
+\phi_{ij}&=\frac{n_{11}^{(ij)}n_{00}^{(ij)}-n_{10}^{(ij)}n_{01}^{(ij)}}
+{\sqrt{n_{1\cdot}^{(ij)}n_{0\cdot}^{(ij)}n_{\cdot1}^{(ij)}n_{\cdot0}^{(ij)}}},\\
+\bar\phi&=\frac{2}{L(L-1)}\sum_{i<j}\phi_{ij},\qquad
+\overline{|\phi|}=\frac{2}{L(L-1)}\sum_{i<j}|\phi_{ij}|.
+\end{aligned}
+\label{eq:phi}
+\end{equation}
+The clinical cohort yields $\bar\phi=0.0217$ and $\overline{|\phi|}=0.0494$. Reporting both avoids incorrectly calling the signed mean an average absolute correlation.
+
+These quantities provide a compact description before model training. They do not define a model-selection threshold. Section~V therefore evaluates method rankings across realized $\mathrm{LDS}$ values while holding label density and single-label signal approximately constant.
+
+\subsection{Multi-Label Classification Methods}
+
+Multi-label methods differ primarily in how much they model label interdependencies \cite{zhang2014,gibaja2015}. We evaluate ten model families under identical outer folds: BR--logistic regression, BR--XGBoost, BR--LightGBM, BR--CatBoost, ECC--LightGBM, LP--RF, RAkELd--RF, a shared MLP, a multitask DNN, and TabPFN-3.
+
+Binary Relevance (BR) decomposes the problem into $L$ independent binary classifiers, one per label, without sharing information across complications \cite{tsoumakas2007b}. Logistic regression uses balanced class weights and at most 5,000 iterations. XGBoost \cite{chen2016} uses 200 estimators, depth 4, and learning rate 0.05; LightGBM \cite{ke2017} uses 200 estimators, depth 6, and learning rate 0.03. Both use the training-fold negative-to-positive ratio for rare-label weighting. CatBoost \cite{prokhorenkova2018} uses depth 6, learning rate 0.03, and the same class-weight definition; its per-label iteration count is selected from four inner folds (maximum 500) and the selected count is used to retrain on the complete outer training fold.
+
+Classifier Chains (CC) keep the binary structure but allow each label's classifier to use the predicted labels of those preceding it in a randomly ordered chain \cite{read2011}. To reduce sensitivity to the arbitrary chain ordering, we employ an Ensemble of Classifier Chains (ECC) with 50 random orderings trained in parallel, using LightGBM with 200 trees, depth~6, and learning rate 0.03. The directional bias introduced by the chain structure is partially averaged out by the ensemble.
+
+Label Powerset (LP) treats each distinct label combination as one class and can capture higher-order interactions \cite{tsoumakas2007b}; it is also vulnerable to combinatorial fragmentation. We implement LP--RF using 200 trees and maximum depth 10.
+
+Random $k$-Labelsets offers a practical middle ground between BR and LP \cite{tsoumakas2007}. We use the disjoint implementation RAkELd--RF: the 12 labels are partitioned into three non-overlapping four-label subsets, and one LP--RF model is fitted per subset. It therefore does not create overlapping random subsets. Each Random Forest uses the same 200-tree, depth-10 configuration as LP--RF.
+
+A limitation shared by the problem-transformation families is that they learn entirely from each relatively small outer training fold, with no external pretraining. This motivates the inclusion of a tabular foundation model.
+
+TabPFN is a transformer pretrained on synthetic tabular tasks and produces predictive distributions without task-specific gradient updates \cite{hollmann2025}. We used TabPFN-3 through \texttt{tabpfn==8.0.1} and the package's default version-3 classifier checkpoint \path{tabpfn-v3-classifier-v3_default.ckpt} \cite{tabpfn3report}. We deploy one independent classifier per label. Random-Forest importance scores aggregated across the 12 training labels rank the predictors, and the top 80 are retained within the current training fold. Inner OOF weight estimation uses two TabPFN-3 ensemble members; the outer model uses eight. Neither feature selection nor the TabPFN configuration is adapted to an outer test fold. The checkpoint name and SHA-256 digest are fixed in the public configuration; the licensed weight file is not redistributed.
+
+Two neural multi-label baselines complete the benchmark. The shared MLP has hidden widths 128 and 64 with ReLU and dropout 0.2. The multitask DNN uses a 128-unit shared representation and one 32-unit branch per label. Both use Adam (learning rate $10^{-3}$, weight decay $10^{-5}$), batch size 64, and W-BCE. Their training epochs are selected in the inner folds and the median selected epoch is used for outer-fold retraining. With 1,700 total patients and 12 imbalanced outcomes, shared representation learning is empirically assessed rather than assumed.
+
+\subsection{GCN Ablation Design}
+
+Whether explicit label-graph modeling helps on clinical tabular data remains an open question, and we investigate it through a systematic ablation rather than evaluating a single GCN configuration. The base architecture consists of a three-layer MLP feature encoder with hidden dimensions 256, 128, 64 (batch normalization, ReLU, 0.3 dropout) that maps each patient to a 64-dimensional embedding. An optional two-layer GCN maps 64 to 128 and back to 64 dimensions before a dot-product head or a label-specific 32-unit concatenation head produces each logit. Vertices are the twelve complications, and retained edges are weighted by training-set conditional co-occurrence frequencies above the fixed construction cutoff.
+
+Eighteen configurations are formed by crossing three graph structures (no graph; sparse asymmetric with edge cutoff 0.15; symmetric max-pooled with cutoff 0.08), two prediction heads (dot product; label-specific perceptron), and three losses (W-BCE; W-ASL \cite{ridnik2021} with $\gamma_-=2$ or 3 and probability clip $m=0.05$). For label $l$, let $w_l=N_l^-/N_l^+$, $p_{il}=\sigma(z_{il})$, and $q_{il}=\min(1-p_{il}+m,1)$. The two implemented losses are
+\begin{equation}
+\mathcal{L}_{\mathrm{W\mbox{-}BCE}}=-\frac{1}{nL}\sum_{i,l}\left[w_l y_{il}\log p_{il}+(1-y_{il})\log(1-p_{il})\right],
+\label{eq:wbce}
+\end{equation}
+and
+\begin{equation}
+\mathcal{L}_{\mathrm{W\mbox{-}ASL}}=-\frac{1}{nL}\sum_{i,l}\left[w_l y_{il}\log p_{il}+(1-y_{il})p_{il}^{\gamma_-}\log q_{il}\right].
+\label{eq:wasl}
+\end{equation}
+The positive term has exactly the same weight in both losses; W-ASL additionally clips and focuses the negative term. Small hand-calculated tensors verify both definitions in the released tests. The graph cutoffs are construction hyperparameters, not $\mathrm{LDS}$ thresholds. AdamW uses learning rate $10^{-3}$, weight decay $10^{-4}$, batch size 64, and at most 200 epochs; validation early stopping uses patience 25 and minimum improvement $10^{-4}$. The ablation fixes the first outer fold of repeat one and its first inner split as the training/validation partition; the outer test fold remains untouched, and graph edges and class weights use only the ablation training portion. The full 18-cell grid is run for seeds 42--51 on this fixed partition. Within each seed, matching no-graph, asymmetric, and symmetric configurations share the same initialization, epoch-wise batch order, architecture, optimizer, and training protocol. We report paired graph-minus-no-graph Macro-AUROC differences with two-sided 95\% $t$ intervals across the ten seeds. Because only optimization seeds vary, the intervals characterize optimization randomness on this fixed partition; they do not quantify resampling uncertainty over alternative patient splits or causal effects of graph edges.
+
+\subsection{Ensemble Strategies}
+
+LP--RF and TabPFN-3 represent complementary modeling assumptions: LP--RF models joint label combinations, whereas TabPFN-3 uses a pretrained prior through independent binary classifiers. Whether this complementarity improves prediction is treated as an empirical question. We therefore evaluate two fixed ensemble strategies without introducing a meta-learner.
+
+Let $M=2$ index LP--RF and TabPFN, and let $\hat{\mathbf{y}}^{(m)} \in [0,1]^{L}$ denote their probability vectors. The equal-weight ensemble averages uniformly:
+\begin{equation}
+\hat{\mathbf{y}}^{\mathrm{eq}} = \frac{1}{M}\sum_{m=1}^{M}\hat{\mathbf{y}}^{(m)}.
+\label{eq:eq_ensemble}
+\end{equation}
+The weighted ensemble uses per-label softmax weights derived from four-fold inner OOF performance:
+\begin{equation}
+\hat{y}_l^{\mathrm{wt}} = \sum_{m=1}^{M} w_{ml}\,\hat{y}_l^{(m)}, \quad
+w_{ml} = \frac{\exp(\mathrm{AUC}_{ml}^{\mathrm{inner\mbox{-}OOF}})}{\sum_{m'=1}^{M}\exp(\mathrm{AUC}_{m'l}^{\mathrm{inner\mbox{-}OOF}})}
+\label{eq:wt_ensemble}
+\end{equation}
+where $\mathrm{AUC}_{ml}^{\mathrm{inner\mbox{-}OOF}}$ is measured only among the current outer training patients. The weights are then frozen before the two outer-test probability vectors are combined. The primary comparison fixed in the benchmark configuration is the weighted ensemble minus TabPFN-3; the equal ensemble is secondary. No stacking or three-model ensemble is included.
+
+\subsection{Statistical Verification Framework}
+\label{sec:statistical}
+
+Comparing twelve imbalanced binary classifiers with standard significance tests requires careful design. Three challenges motivate the verification framework: multiplicity of comparisons across twelve labels, extreme sample size variation for rare complications, and the need for interval estimates rather than just point estimates.
+
+\textbf{DeLong test for larger-sample labels.} The paired DeLong test \cite{delong1988} compares the two patient-level mean OOF predictions for labels with at least 30 positive patients. Labels below this operational stability threshold use a paired permutation test instead.
+
+For concreteness: let $y_i \in \{0,1\}$ be the ground truth for a single complication on patient~$i$, and $s_i^A$, $s_i^B$ the predicted scores from models~$A$ and $B$. With $n_+$ positive and $n_-$ negative samples, define the kernel
+\[
+\psi(s_i^{+}, s_j^{-}) =
+\begin{cases}
+1,   & s_i^{+} > s_j^{-} \\
+0.5, & s_i^{+} = s_j^{-} \\
+0,   & s_i^{+} < s_j^{-}
+\end{cases}
+\]
+and the positive- and negative-sample structural components
+\begin{align*}
+V_{10,i}^{A} &= \frac{1}{n_{-}}\sum_{j: y_j=0}\psi(s_i^{A}, s_j^{A}), \quad i: y_i = 1 \\
+V_{01,j}^{A} &= \frac{1}{n_{+}}\sum_{i: y_i=1}\psi(s_i^{A}, s_j^{A}), \quad j: y_j = 0
+\end{align*}
+with analogous definitions for model $B$. Let $\mathbf{S}_{10}$ and $\mathbf{S}_{01}$ be the sample covariance matrices of the paired $V_{10}$ and $V_{01}$ components. The paired AUC covariance estimator is
+\[
+\mathbf{S}=\frac{\mathbf{S}_{10}}{n_+}+\frac{\mathbf{S}_{01}}{n_-},
+\]
+which is the covariance construction of DeLong et al. \cite{delong1988}. The test statistic is
+\[
+z = \frac{\hat{\theta}^{A} - \hat{\theta}^{B}}{\sqrt{S_{11} + S_{22} - 2S_{12}}}
+\]
+which follows a standard normal distribution under the null hypothesis of equal AUC. Two-sided $p$-values are reported.
+
+\textbf{Permutation test for small-sample labels.} For complications with fewer than 30 positive patients, we use a paired permutation test \cite{good2000}: over 10,000 permutations, the two model scores are randomly swapped within each patient with equal probability, the AUROC difference is recorded, and the two-sided $p$-value is computed with continuity correction.
+
+\textbf{Multiple comparison correction.} The Benjamini-Hochberg (BH) procedure controls the false discovery rate at $\alpha = 0.05$ across twelve comparisons \cite{benjamini1995}. With raw $p$-values sorted in ascending order, the hypothesis at rank $k$ is rejected when
+\[
+p_{(k)} \leq \frac{\alpha \cdot k}{L}, \quad k = 1, \ldots, L
+\]
+with all smaller-rank hypotheses also rejected. The BH-adjusted $q$-value is defined as the minimum scaled $p$-value over all ranks $\geq k$.
+
+\textbf{Bootstrap confidence intervals.} We first average each patient's five repeated-OOF probability vectors and calculate all reported plug-in point estimates from those averaged probabilities. We then draw 2,000 ordinary patient-level samples with replacement from the 1,700 rows using seed 42 \cite{efron1994}. Within each draw, the same patient indices evaluate every model and the primary contrast, preserving pairing across all 12 outcomes. A draw lacking one class for any outcome is discarded because its Macro-AUROC is undefined; sampling continues until 2,000 common valid draws are obtained. Percentile 95\% intervals are reported for Macro-AUROC, Micro-AUROC, Macro-AUPRC, Brier score, fixed-threshold Macro-F1, and paired model differences. Because the absolute-bin ECE statistic is upward biased after resampling, its aggregate model-specific interval is centered on the reported plug-in estimate using the bootstrap standard error and a normal 95\% critical value; the output table records the interval method. These intervals condition on the saved averaged OOF predictions and do not propagate uncertainty from fully refitting the nested pipeline within each bootstrap sample. The same ordinary paired procedure supplies the per-label AUROC-difference intervals.
+
+\subsection{Calibration Analysis}
+
+Discrimination does not establish whether predicted risks are numerically reliable. For each model and label, we therefore calculate the Brier score \cite{brier1950},
+\begin{equation}
+\mathrm{BS}_l=\frac{1}{N}\sum_{n=1}^{N}(\hat p_{n,l}-y_{n,l})^2,
+\end{equation}
+where smaller values indicate lower mean squared probability error. We also report equal-frequency 10-bin expected calibration error (ECE), the prevalence-weighted absolute difference between mean predicted probability and observed frequency across approximately equal-count bins. Finally, calibration intercept $a_l$ and slope $b_l$ are estimated by logistic recalibration \cite{vancalster2019},
+\begin{equation}
+\operatorname{logit}P(y_{n,l}=1)=a_l+b_l\operatorname{logit}(\hat p_{n,l}).
+\end{equation}
+The intercept $a_l$ and slope $b_l$ are fitted simultaneously; ideal values are $a_l=0$ and $b_l=1$. Brier score, ECE, intercept, and slope are accompanied by patient-bootstrap intervals. For internal ECE intervals, the decile assignments defined by the complete OOF prediction vector are held fixed within resamples; this estimates uncertainty for the reported decile-based statistic without redefining bins after bootstrap duplicates are introduced. Labels with fewer than 30 positive patients are marked unstable, and their intercepts and slopes are not averaged into a summary calibration parameter. Appendix~\ref{app:internal} additionally reports an unweighted BR-logistic sensitivity analysis on the same outer folds to show how class weighting affects calibration.
+
+\subsection{Cross-Cohort Mortality Transportability Stress Test}
+\label{sec:external_methods}
+
+The external specification was locked before fitting the external models and evaluating Hungarian outcomes. The source endpoint was any in-hospital death ($\mathrm{LET\_IS}>0$); the external primary endpoint was all-cause death on days 0--30 after the first Hungarian admission, with days 0--7 as a sensitivity endpoint. These windows are related but not equivalent. Only four admission-stage variables were mapped: age, sex, prior myocardial infarction, and prior heart failure. TabPFN-3 was the primary model and logistic regression the conventional comparator. No LP--RF or ensemble variant was introduced.
+
+Both models were fitted exclusively on the 1,700-patient Krasnoyarsk cohort. Source-fitted median imputation was applied unchanged to the Hungarian cohort; complete cases formed a missing-data sensitivity analysis. Fivefold source OOF predictions audited the reduced models before they were fitted on the entire source cohort. Logistic regression used source-fitted standardization and at most 5,000 iterations; TabPFN used eight ensemble members and one preprocessing worker. The external data were not used to fit preprocessing, tune hyperparameters, select a model, optimize a threshold, or recalibrate probabilities. Hypertension, diabetes, missingness indicators, and post-admission variables were excluded from the locked specification.
+
+We report AUROC, AUPRC, Brier score, adaptive equal-frequency 10-bin ECE, calibration intercept and slope, observed and mean predicted risk, and the observed-to-expected (O:E) ratio. Two thousand ordinary patient-level bootstrap resamples were drawn with replacement using seed 42. Within each replicate, identical multinomial patient weights were used for both models, producing paired percentile 95\% confidence intervals for model-specific metrics and TabPFN-3-minus-logistic-regression differences. Reliability-curve points represent mean predicted and observed risk within each model's ten risk deciles. Appendix~\ref{app:external} gives the complete mapping, case selection, and sensitivity analyses; machine-readable aggregate results are available in the repository.
+
+\subsection{Temporal Horizon Analysis}
+
+The temporal analysis uses the shared MLP baseline rather than retraining every benchmark model. The same 128--64 encoder, ReLU activations, dropout 0.2, W-BCE, Adam optimizer (learning rate $10^{-3}$, weight decay $10^{-5}$), batch size 64, repeated outer-fold assignments, and four-fold inner epoch selection are used at all horizons. The four feature contracts contain 91, 94, 97, and 100 variables. Horizon-specific deterministic inner random states were used, so cross-horizon comparisons are exploratory rather than fully paired estimates. Later-horizon features can reflect treatment response to an evolving complication; these estimates therefore represent risk stratification with accumulated information rather than treatment-naive admission prediction.
+
+\subsection{Implementation and Reproducibility}
+
+The verified environment uses Python~3.12.3, NumPy~2.5.2, pandas~2.3.3, SciPy~1.17.1, scikit-learn~1.7.2, PyTorch~2.9.1 (CPU), LightGBM~4.6.0, CatBoost~1.2.8, \texttt{tabpfn==8.0.1}, scikit-multilearn~0.2.0, and torch-geometric~2.8.0. The TabPFN-3 checkpoint filename and SHA-256 hash are recorded in Appendix~\ref{app:validation} and the configuration; the weight file is not redistributed. The public configuration fixes every hyperparameter and seed. The canonical entry point is \texttt{python -m src.run\_benchmark --config configs/comlc\_mi\_benchmark.json}. It writes the five predictions per patient, fold assignments, inner decisions, aggregate and per-label metrics, calibration bins, runtime environment, and a SHA-256 manifest to \texttt{output/benchmark/}.
+
+%=============================================================================
+\section{Experimental Results}
+\label{sec:results}
+%=============================================================================
+
+The results are presented in the following order: controlled synthetic sensitivity analysis, clinical benchmark comparison, paired statistical tests, temporal sensitivity, calibration, and partial external transportability.
+
+\subsection{Synthetic Dependency Experiments}
+
+We generated 10 repeated datasets at each of five residual-correlation settings ($\rho=0,0.25,0.50,0.75,0.90$). Each dataset contained 1,000 samples, 50 features, and 10 labels. Within each repetition, the feature matrix, label-specific feature weights, shared and independent Gaussian draws, train/validation/test indices, and 0.10 marginal prevalence were reused across $\rho$. Changing $\rho$ altered cross-label residual correlation while preserving marginal residual variance. We report realized $\mathrm{LDS}$ rather than equating $\rho$ with $\mathrm{LDS}$. BR and CC used LightGBM; BR-kNN fitted one distance-weighted $k=10$ classifier per label; and the GCN used a two-layer encoder, training-label adjacency, weighted binary cross-entropy, validation early stopping, and a maximum of 80 epochs.
+
+The control checks behaved as intended (Table~\ref{tab:synthetic_r1} and Fig.~\ref{fig:synthetic}). Mean $\mathrm{LD}$ was exactly 0.100 at every setting, and mean true-score AUC varied only from 0.7932 to 0.7953. Realized $\mathrm{LDS}$ increased from $0.104\pm0.007$ to $0.420\pm0.011$. BR remained stable (Macro-AUROC 0.671--0.678), whereas the evaluated GCN decreased from $0.634\pm0.031$ to $0.523\pm0.062$. Thus this experiment provides no empirical crossing point at which $\mathrm{LDS}$ alone predicts a GCN advantage. It instead shows that the relationship depends on the architecture and data-generating mechanism.
+
+\input{paper/generated_r1/table_synthetic_r1.tex}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth,keepaspectratio]{figures/r1/fig_synthetic.pdf}
+\caption{Controlled dependency sensitivity analysis. Test Macro-AUROC is plotted against realized $\mathrm{LDS}$; points and error bars show mean $\pm$ SD across ten generated datasets. $\mathrm{LD}$ was fixed at 0.10, and the stable true-score AUC is reported in Table~\ref{tab:synthetic_r1}. No threshold line is shown because no universal transition was observed.}\label{fig:synthetic}
+\end{figure}
+
+\subsection{Model Comparison}
+
+Table~\ref{tab:main_results_r1} reports performance from the mean of five outer-fold OOF predictions for every patient. All model families used the same 25 outer folds, and the confidence intervals were obtained by resampling patients rather than treating the five repeated predictions as independent observations.
+
+\input{paper/generated_r1/table_internal_models.tex}
+
+LP--RF was the strongest single model by Macro-AUROC (0.7138), followed by RAkELd--RF (0.7090); TabPFN-3 had lower Macro-AUROC (0.6945) but the highest single-model Micro-AUROC (0.8043), lowest Brier score (0.0615), and lowest ECE$_{10}$ (0.0153). The inner-OOF-weighted LP--RF--TabPFN-3 ensemble achieved the highest overall Macro-AUROC (0.7192) and a Macro-AUPRC of 0.2164. Plug-in differences calculated from the saved mean OOF predictions were 0.0246 for Macro-AUROC (95\% CI 0.0144--0.0352), 0.0087 for Macro-AUPRC (0.0046--0.0149), 0.0056 for ECE (0.0021--0.0080), and $-$0.0152 for Macro-F1 ($-$0.0209 to $-$0.0103). Bootstrap resampling was used for the intervals, not for the point estimates. The Micro-AUROC difference was small and imprecise (0.0004, $-$0.0026--0.0033). The ensemble exceeded its strongest constituent, LP--RF, by only 0.0053 in Macro-AUROC; this descriptive post hoc difference was not the primary contrast.
+
+The discrimination gain did not extend to every metric. Relative to TabPFN, the weighted ensemble had a slightly higher (worse) Brier score by 0.00033 (95\% CI 0.00005--0.00059), higher ECE$_{10}$ by 0.0051 (0.0021--0.0080), and lower Macro-F1 at the fixed 0.5 threshold by 0.0151 (0.0103--0.0209 lower). BR--CatBoost and BR--LR produced the largest threshold-0.5 Macro-F1 values (0.2279 and 0.2246), but both had much poorer Brier and ECE values. Because no threshold was optimized on outer-test outcomes, Macro-F1 is reported as a fixed-threshold operating characteristic rather than as the model-selection criterion.
+
+\subsection{Ablation Results}
+
+Across seeds 42--51, the no-graph, dot-product, W-BCE configuration had the highest mean Macro-AUROC (0.6958, SD 0.0124). The closest graph-augmented configuration was asymmetric graph, concatenation head, W-BCE (0.6937, SD 0.0114). Table~\ref{tab:gcn_paired_r1} reports graph-minus-no-graph differences within each matched head, loss, and seed.
+
+\input{paper/generated_r1/table_gcn_paired.tex}
+
+None of the 12 paired contrasts showed a significant positive graph effect. For dot-product W-BCE, the asymmetric graph difference was $-$0.0028 (95\% CI $-$0.0157--0.0101), whereas the symmetric graph was worse by $-$0.0141 ($-$0.0273--$-$0.0008). Other intervals included zero. W-ASL did not exceed the best W-BCE mean. This is a controlled negative result for the two constructed graphs, two heads, and three losses under the tested protocol; it is not evidence that every possible dependency architecture is ineffective.
+
+\subsection{Per-Label Statistical Significance}
+
+The overall comparison obscures outcome-level heterogeneity. Table~\ref{tab:primary_labels_r1} and Fig.~\ref{fig:forest} compare the weighted ensemble with TabPFN-3. Supraventricular tachycardia had only 20 events and therefore used the fixed 10,000-swap paired permutation test; the remaining labels used paired DeLong tests. BH correction was applied across all 12 outcomes.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth,keepaspectratio]{figures/r1/fig_primary_forest.pdf}
+\caption{Per-label AUROC differences for the inner-OOF-weighted LP--RF--TabPFN-3 ensemble minus TabPFN-3. Bars are 95\% paired patient-bootstrap intervals (2,000 resamples). Teal indicates BH-adjusted significance, orange indicates an interval excluding zero without BH significance, and blue indicates an interval spanning zero. Abbreviations and positive counts are defined in Table~\ref{tab:labels}.}\label{fig:forest}
+\end{figure}
+
+\input{paper/generated_r1/table_primary_labels_r1.tex}
+
+Three positive differences remained significant after BH correction: ventricular fibrillation ($\Delta$AUROC 0.0286, $q=0.0143$), Dressler syndrome (0.0763, $q=0.00056$), and recurrent myocardial infarction (0.0320, $q<0.0001$). Pulmonary edema and myocardial rupture had bootstrap intervals excluding zero but did not survive the fixed 12-label BH family. The supraventricular-tachycardia estimate was large (0.0908) but imprecise (95\% CI $-$0.0129--0.1974), so it is explicitly marked unstable. Atrioventricular block and lethal outcome had small negative point estimates with intervals spanning zero.
+
+\subsection{Temporal Horizon Results}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth,keepaspectratio]{figures/r1/fig_temporal.pdf}
+\caption{Exploratory temporal sensitivity analysis for one neural baseline. Outer-fold assignments and architecture are fixed across horizons, while horizon-specific deterministic inner random states select training epochs; only features available by the indicated time are included.}\label{fig:temporal}
+\end{figure}
+
+The Macro-AUROC values were 0.6962 at admission, 0.7018 at 24 hours, 0.7049 at 48 hours, and 0.7009 at 72 hours (Fig.~\ref{fig:temporal}). The admission value differs slightly from the shared-MLP result in the all-model benchmark (0.6969) because the two locked runs used different inner random states for epoch selection; both use the same 91-variable contract. Thus discrimination improved modestly through 48 hours and then declined, rather than increasing monotonically with accumulated information. Pulmonary edema showed the largest admission-to-72-hour increase (+0.0718), whereas myocardial rupture ($-$0.0315), supraventricular tachycardia ($-$0.0163), and post-infarction angina ($-$0.0124) decreased most. These are exploratory within-model differences and were not subjected to significance testing.
+
+Because later feature blocks include medications and interventions administered during hospitalization, the 72-hour estimate may benefit from treatment response or signs of a complication already developing. The temporal analysis is consequently interpreted as risk stratification with accumulated information, not as evidence that later data causally improve treatment-naive prognosis.
+
+\subsection{Calibration Results}
+
+\input{paper/generated_r1/table_calibration_r1.tex}
+
+Table~\ref{tab:calibration_r1} summarizes probability error and the median label-specific recalibration parameters over the 11 outcomes with at least 30 events. Lower Brier score and ECE are better, whereas ideal logistic recalibration has intercept 0 and slope 1; each intercept and slope pair was fitted simultaneously. TabPFN-3 had Brier 0.0615, ECE$_{10}$ 0.0153, median intercept 0.129, and median slope 0.948. The weighted ensemble had Brier 0.0619, ECE$_{10}$ 0.0209, median intercept 1.492, and median slope 1.496. Thus the ensemble's Macro-AUROC improvement was accompanied by less favorable probability calibration. The rare supraventricular-tachycardia intercept and slope were not included in these medians.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth,keepaspectratio]{figures/r1/fig_internal_calibration.pdf}
+\caption{Internal calibration audit. Panels (a) and (b) show per-label Brier score and equal-frequency ten-bin ECE for TabPFN-3 and the inner-OOF-weighted ensemble. Panel (c) summarizes their label-specific reliability deciles; each point averages the mean predicted probability and observed frequency for the corresponding within-label decile, and the dashed line denotes ideal calibration. Appendix~\ref{app:internal} reports per-label intervals, an unweighted BR-logistic sensitivity, and 12 outcome-specific reliability panels.}\label{fig:calibration}
+\end{figure*}
+
+For the weighted ensemble, per-label Brier scores ranged from 0.0115 to 0.1475 and ECE$_{10}$ from 0.0074 to 0.0431. TabPFN-3's corresponding ranges were 0.0114--0.1458 and 0.0072--0.0228. These results show that aggregate calibration can mask outcome-level variation. No recalibration model was fitted on OOF outcomes for deployment; the intercepts and slopes are audit statistics only, with patient-bootstrap intervals reported per label in Appendix~\ref{app:internal}.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth,keepaspectratio]{figures/r1/fig_external_transportability.pdf}
+\caption{Partial external transportability of reduced four-feature models for 30-day all-cause mortality. (a) AUROC and AUPRC with 95\% intervals from 2,000 paired patient-level bootstrap resamples. (b) Reliability curves using ten equal-frequency risk bins; each point is the bin mean predicted risk and observed event proportion, vertical bars are Wilson 95\% confidence intervals, and the dashed line denotes ideal calibration. (c) Brier score and 10-bin ECE (lower is better). The Hungarian cohort contained 29,596 index AMI events and 3,888 deaths within 30 days.}\label{fig:external}
+\end{figure*}
+
+\subsection{Partial External Transportability Results}
+\label{sec:external_results}
+
+The first-event rule reproduced 29,596 Hungarian index AMI events, including 3,888 deaths within 30 days and 2,408 within 7 days. Table~\ref{tab:external_r1} and Fig.~\ref{fig:external} summarize the analysis whose specification was locked before external model fitting and evaluation. The reduced source-fitted models retained modest discrimination: AUROC was 0.696 (95\% CI 0.688--0.705) for TabPFN-3 and 0.705 (0.696--0.713) for logistic regression. The paired AUROC difference for TabPFN-3 minus logistic regression was $-$0.0081 (95\% CI $-$0.0097--$-$0.0067); the AUPRC difference was $-$0.0158 ($-$0.0199--$-$0.0115).
+
+\input{paper/generated_r1/table_external_r1.tex}
+
+TabPFN-3 had the lower Brier score (0.1093 versus 0.1106; paired difference $-$0.00138, 95\% CI $-$0.00174 to $-$0.00102) and lower ECE (0.0341 versus 0.0569). Nevertheless, both models overpredicted 30-day mortality: the observed rate was 0.131, whereas mean predicted risks were 0.165 for TabPFN-3 and 0.188 for logistic regression, yielding O:E ratios of 0.794 and 0.698. Calibration slopes were close to one, while the negative intercepts and reliability curves documented the baseline-risk shift.
+
+Complete-case and 7-day sensitivity analyses preserved the same qualitative trade-off. In 28,477 complete cases, AUROC was 0.704 for TabPFN-3 and 0.713 for logistic regression. For 7-day mortality, the corresponding all-event AUROCs were 0.690 and 0.697. Brier scores were lower because of the lower event rate, but ECE and overprediction increased because neither model was recalibrated to the shorter horizon. These analyses concern only the reduced fatal-outcome task; they do not test the remaining 11 complications, the 91-variable admission-stage benchmark, $\mathrm{LDS}$, or label-graph learning. Full mapping and sensitivity tables are in Appendix~\ref{app:external}.
+
+\FloatBarrier
+
+%=============================================================================
+\section{Discussion}
+\label{sec:discussion}
+%=============================================================================
+
+\subsection{Comparison with Prior Work on This Database}
+
+\begin{table*}[!t]
+\caption{Comparison with Prior Work on the Same Database}
+\label{tab:prior}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+\textbf{Dimension} & \textbf{Elashmawi 2024 \cite{elashmawi2024}} & \textbf{Makhmudov 2025 \cite{makhmudov2025}} & \textbf{This Study} \\
+\midrule
+Task type & Multi-label transforms & Multitask neural & Multi-label benchmark \\
+Methods compared & 4 transforms & Neural + comparators & \textbf{10 families} \\
+Temporal horizons & None & None & \textbf{4} (admission--72h) \\
+Statistical tests & None & None & \textbf{DeLong + perm. + FDR} \\
+Calibration analysis & No & No & \textbf{Brier + ECE + intercept/slope audit} \\
+Label-space analysis & No & No & \textbf{LC, LD, LDS, phi} \\
+External analysis & No & No & \textbf{Reduced fatal outcome} \\
+Graph ablation & None & None & \textbf{18 settings $\times$ 10 seeds} \\
+Methodological audit & No & No & \textbf{Yes} (Methods and Appendices) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+The present work is not the first to apply machine learning to the Krasnoyarsk MI database, but it differs from prior studies in ways that are not merely quantitative (Table~\ref{tab:prior}).
+
+Elashmawi et al. \cite{elashmawi2024} compared four established multi-label transformations, but did not report probability calibration or multiplicity-controlled label-wise discrimination tests. Makhmudov et al. \cite{makhmudov2025} proposed a multitask neural architecture and compared it with conventional models, but addressed a different joint objective that included mortality-cause classification. Zhang et al. \cite{jia2025} applied a patient-similarity graph to node classification; its transductive patient-graph formulation differs materially from the label-graph, multi-label benchmark evaluated here, so direct numerical comparison is not appropriate.
+
+The present benchmark adds a common repeated-nested validation protocol, probability calibration, multiplicity-controlled paired comparisons, temporal sensitivity analysis, and a paired-seed label-graph ablation. These additions address questions that were outside the scope of the prior studies rather than implying that numerical results obtained under different targets and validation designs are directly comparable.
+
+\subsection{Foundation-Model and Ensemble Performance}
+
+LP--RF, not TabPFN-3, was the strongest single model for the primary Macro-AUROC under the repeated-nested admission-stage evaluation. The weighted LP--RF--TabPFN-3 ensemble achieved the highest overall Macro-AUROC, and its primary difference from TabPFN-3 was positive with a confidence interval excluding zero. Three label-wise differences also survived BH correction. These findings demonstrate why conclusions from one split should not be carried into a stronger validation design without recomputation.
+
+The ensemble should nevertheless not be called uniformly superior. It exceeded LP--RF by only 0.0053 Macro-AUROC, its Micro-AUROC improvement over TabPFN-3 was uncertain, and its Brier score, ECE, and fixed-threshold Macro-F1 were worse than TabPFN-3's. The unweighted BR-logistic sensitivity in Appendix~\ref{app:internal} further shows how class weighting affects probability calibration. Discrimination, fixed-threshold classification, and calibration answer different questions and should not be collapsed into a single claim of model quality.
+
+\subsection{Contemporary Fatal-Outcome Transportability}
+
+The Hungarian analysis strengthens the manuscript in a deliberately limited way. Despite a 23--27-year separation in calendar period, a different country and health system, and substantial shifts in age and prior-MI prevalence, both four-feature models retained modest rank discrimination. The result is not evidence that TabPFN-3 universally outperforms a simpler model: logistic regression had slightly higher AUROC and AUPRC, whereas TabPFN-3 had lower Brier score, lower ECE, and less severe overprediction. This trade-off reinforces the need to evaluate discrimination and probability accuracy separately.
+
+The O:E ratios below one and negative calibration intercepts show that source-fitted risks cannot be transferred directly as contemporary 30-day probabilities. Because no external recalibration was permitted in the locked analysis, the observed calibration shift remains visible rather than being corrected post hoc. The comparison is also conservative in feature scope: it asks whether a common four-variable fatal-outcome signal transports, not whether the full feature representation or label-dependency machinery transports. Thus the external evidence reduces, but does not remove, the original study's external-validity limitation.
+
+\subsection{Tested Label-Graph Configurations}
+
+The full-cohort descriptive $\mathrm{LDS}$ is 0.103, but this value is prevalence-dependent: even independent labels have nonzero expected directed conditional co-occurrence. It is therefore a label-space descriptor rather than a formal independence statistic. The median directed conditional co-occurrence is 0.065; fold-specific graph quantities are recomputed from training labels only.
+
+Across ten paired optimization seeds on one fixed partition, the best mean GCN-ablation result was obtained without a label graph (0.6958). The tested graph-minus-no-graph contrasts did not support a positive gain; one symmetric-graph contrast had an interval below zero. The controlled simulations complement this clinical ablation by changing residual dependence while holding marginal density and univariate signal approximately fixed. Together, these analyses do not support a universal $\mathrm{LDS}$ transition point. They support only a narrower, dataset-, partition-, and architecture-specific conclusion about the tested graph configurations; they neither establish equivalence nor identify a causal effect of label edges.
+
+\subsection{Methodological Implications for Clinical Benchmarks}
+
+Three methodological lessons stand out. First, paired tests must preserve patient-level pairing, and DeLong covariance must contain the positive- and negative-class sample-size divisors. For rare outcomes, a paired swapping test is more defensible than relying on asymptotics. Second, multiplicity adjustment changes the evidential claim: five bootstrap intervals excluded zero, but only three ensemble--TabPFN-3 comparisons survived the fixed 12-label BH correction. Third, uncertainty and calibration are outcome-specific. The 20-event supraventricular-tachycardia outcome retained a wide AUC-difference interval, while average calibration metrics obscured between-label variation.
+
+The corrected temporal experiment also cautions against a simple information-accumulation narrative. Macro-AUROC increased only modestly from admission to 48 hours and then decreased at 72 hours, while several individual outcomes deteriorated across the full interval. Moreover, post-admission treatments may encode response to an already evolving complication. These results are useful as a sensitivity analysis but do not establish a prospective causal benefit of waiting for later features.
+
+\subsection{Limitations}
+
+The main benchmark comes from one Russian hospital in 1992--1995, before contemporary reperfusion, antiplatelet, statin, and intensive-care practice. Changes in treatment and case mix may alter both baseline risks and predictor--outcome relations. The Hungarian analysis supplies only partial transportability evidence for a reduced four-feature mortality task. In-hospital source death and 30-day external all-cause death are not identical endpoints, and the analysis does not externally validate the other 11 outcomes, the 91-variable benchmark, the ensemble, $\mathrm{LDS}$, or label-graph components. Both external models overpredicted absolute risk and are not suitable for clinical deployment without independent recalibration and validation.
+
+The sample contains only 1,700 patients, and repeated nested validation cannot replace evaluation in a new outcome-complete cohort. Supraventricular tachycardia has only 20 positive patients, producing low power and unstable calibration parameters even when all repeated OOF predictions are averaged. Some targets also require careful temporal interpretation: Dressler syndrome can occur after discharge, and the lethal-outcome field is an ordinal cause-of-death code converted to any in-hospital death. The source data provide occurrence indicators but not reliable onset timestamps, so the analysis predicts whether a coded event occurred, not its onset time or competing-risk process. Even the source-dictionary admission-stage contract cannot exclude overlap between an admission manifestation and a subsequently coded complication, and its seven fibrinolysis fields cannot be guaranteed to precede therapy because exact treatment timestamps are absent.
+
+The temporal sensitivity analysis evaluates only one neural architecture, and later predictors can contain information downstream of care. The synthetic generator varies one form of Gaussian residual dependence and cannot represent every clinical dependency structure. Finally, the graph ablation covers specific adjacency rules, heads, and losses; failure of these configurations does not rule out benefit from other dependency models or larger datasets. Outcome-complete multicenter validation, prospectively timestamped predictors, and independently evaluated recalibration and decision utility are priorities for future work.
+
+%=============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+%=============================================================================
+
+This study provides a repeated-nested benchmark for 12 myocardial-infarction complications in 1,700 patients using source-dictionary-defined admission-stage information. LP--RF was the strongest single model by Macro-AUROC (0.7138), and an inner-OOF-weighted LP--RF--TabPFN-3 ensemble reached 0.7192. Its plug-in Macro-AUROC difference from TabPFN-3 was 0.0246 (95\% CI 0.0144--0.0352), with three label-wise differences surviving BH correction; however, TabPFN-3 retained better Brier score, ECE, and fixed-threshold Macro-F1. Across ten paired optimization seeds on one fixed partition, the tested graph configurations did not support a positive gain.
+
+The contemporary Hungarian cohort provides partial transportability evidence for the reduced four-feature fatal-outcome component: logistic regression discriminates slightly better, TabPFN-3 has better probability-error measures, and both overpredict 30-day mortality. This does not validate the other 11 complications or the complete framework. The principal methodological conclusion remains bounded: $\mathrm{LDS}$ describes conditional co-occurrence but is prevalence-dependent and is not a universal architecture-selection threshold. Full multicenter validation with harmonized outcomes, prospectively timestamped predictors, prospectively specified recalibration, and decision-utility assessment remains necessary before clinical use.
+
+%=============================================================================
+\clearpage
+\onecolumn
+\input{paper/appendices.tex}
+\clearpage
+\twocolumn
+
+%=============================================================================
+\section*{Acknowledgment}
+
+The authors acknowledge the Krasnoyarsk Interdistrict Clinical Hospital No.~20 for collecting and maintaining the Myocardial Infarction Complications Database. The authors also would like to express their sincere gratitude for the resources and support provided by the Data Science Innovation and Entrepreneurship Laboratory at Hanshan Normal University.
+
+\section*{Ethics Statement}
+
+This study is a secondary analysis of publicly available, de-identified data. Under the authors' institutional policy, no new ethics approval or informed consent was required for this secondary analysis. The Hungarian source study reports approval by the University of P\'ecs ethical committee (8085/PTE2020; January 31, 2020) and a waiver of additional informed consent for retrospective analysis of fully anonymized registry data \cite{balint2026}. The Krasnoyarsk cohort was obtained from the public UCI repository \cite{uci2020}; no attempt was made to re-identify any participant.
+
+\section*{Data Availability}
+
+The Krasnoyarsk Myocardial Infarction Complications Database is publicly available from the UC Irvine Machine Learning Repository. The Hungarian registry extract, titled ``A data set extracted from the Myocardial Infarction Registry (MR),'' is publicly available from Mendeley Data under CC BY 4.0 at \href{https://doi.org/10.17632/2v7n2r3xch.1}{https://doi.org/10.17632/2v7n2r3xch.1}. Source code, the benchmark configuration, fold indices, internal predictions, aggregate external results, calibration-bin tables, and analysis scripts are available at \href{https://github.com/liaorunqing/CoMLC-MI}{https://github.com/liaorunqing/CoMLC-MI}. The repository and code-result package do not redistribute the Hungarian workbook, patient-level Hungarian predictions, external bootstrap arrays, or licensed TabPFN-3 model weights. Users should obtain the external records from the cited repository and comply with its license. The canonical analysis entry point writes environment metadata and a SHA-256 manifest.
+
+%=============================================================================
+\begin{thebibliography}{00}
+%=============================================================================
+
+\bibitem{elashmawi2024}
+W.~H.~Elashmawi, A.~Tamer, and A.~Nasr, ``Multi-target classification for predicting myocardial infarction complications: A comparative analysis of various machine learning techniques,'' in \emph{Proc. Int. Mobile, Intell., Ubiquitous Comput. Conf.}, 2024, pp.~315--322, \href{https://doi.org/10.1109/MIUCC62295.2024.10783524}{\nolinkurl{https://doi.org/10.1109/MIUCC62295.2024.10783524}}.
+
+\bibitem{makhmudov2025}
+F.~Makhmudov, N.~Ravshanov, D.~Akhmedov, O.~Pekos, D.~Turimov, and Y.~I.~Cho, ``A multitask deep learning model for predicting myocardial infarction complications,'' \emph{Bioengineering}, vol.~12, no.~5, art.~no.~520, 2025, \href{https://doi.org/10.3390/bioengineering12050520}{\nolinkurl{https://doi.org/10.3390/bioengineering12050520}}.
+
+\bibitem{christodoulou2019}
+E.~Christodoulou, J.~Ma, G.~S.~Collins, E.~W.~Steyerberg, J.~Y.~Verbakel, and B.~Van~Calster, ``A systematic review shows no performance benefit of machine learning over logistic regression for clinical prediction models,'' \emph{J. Clin. Epidemiol.}, vol.~110, pp.~12--22, 2019, \href{https://doi.org/10.1016/j.jclinepi.2019.02.004}{\nolinkurl{https://doi.org/10.1016/j.jclinepi.2019.02.004}}.
+
+\bibitem{futoma2020}
+J.~Futoma, M.~Simons, T.~Panch, F.~Doshi-Velez, and L.~A.~Celi, ``The myth of generalisability in clinical research and machine learning in health care,'' \emph{Lancet Digit. Health}, vol.~2, no.~9, pp.~e489--e492, 2020, \href{https://doi.org/10.1016/S2589-7500(20)30186-2}{\nolinkurl{https://doi.org/10.1016/S2589-7500(20)30186-2}}.
+
+\bibitem{chen2019mlgcn}
+Z.-M.~Chen, X.-S.~Wei, P.~Wang, and Y.~Guo, ``Multi-label image recognition with graph convolutional networks,'' in \emph{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit.}, 2019, pp.~5172--5181, \href{https://doi.org/10.1109/CVPR.2019.00532}{\nolinkurl{https://doi.org/10.1109/CVPR.2019.00532}}.
+
+\bibitem{wang2020}
+Y.~Wang, D.~He, F.~Li, X.~Long, Z.~Zhou, J.~Ma, and S.~Wen, ``Multi-label classification with label graph superimposing,'' in \emph{Proc. AAAI Conf. Artif. Intell.}, vol.~34, no.~7, 2020, pp.~12265--12272, \href{https://doi.org/10.1609/aaai.v34i07.6909}{\nolinkurl{https://doi.org/10.1609/aaai.v34i07.6909}}.
+
+\bibitem{vancalster2019}
+B.~Van Calster \emph{et al.}, ``Calibration: The Achilles heel of predictive analytics,'' \emph{BMC Med.}, vol.~17, art.~no.~230, 2019, \href{https://doi.org/10.1186/s12916-019-1466-7}{\nolinkurl{https://doi.org/10.1186/s12916-019-1466-7}}.
+
+\bibitem{zhang2014}
+M.-L.~Zhang and Z.-H.~Zhou, ``A review on multi-label learning algorithms,'' \emph{IEEE Trans. Knowl. Data Eng.}, vol.~26, no.~8, pp.~1819--1837, 2014, \href{https://doi.org/10.1109/TKDE.2013.39}{\nolinkurl{https://doi.org/10.1109/TKDE.2013.39}}.
+
+\bibitem{gibaja2015}
+E.~Gibaja and S.~Ventura, ``A tutorial on multilabel learning,'' \emph{ACM Comput. Surv.}, vol.~47, no.~3, art.~no.~52, 2015, \href{https://doi.org/10.1145/2716262}{\nolinkurl{https://doi.org/10.1145/2716262}}.
+
+\bibitem{tsoumakas2007b}
+G.~Tsoumakas, I.~Katakis, and I.~Vlahavas, ``Mining multi-label data,'' in \emph{Data Mining and Knowledge Discovery Handbook}, O.~Maimon and L.~Rokach, Eds. Boston, MA, USA: Springer, 2009, pp.~667--685, \href{https://doi.org/10.1007/978-0-387-09823-4_34}{\nolinkurl{https://doi.org/10.1007/978-0-387-09823-4_34}}.
+
+\bibitem{read2011}
+J.~Read, B.~Pfahringer, G.~Holmes, and E.~Frank, ``Classifier chains for multi-label classification,'' \emph{Mach. Learn.}, vol.~85, no.~3, pp.~333--359, 2011, \href{https://doi.org/10.1007/s10994-011-5256-5}{\nolinkurl{https://doi.org/10.1007/s10994-011-5256-5}}.
+
+\bibitem{tsoumakas2007}
+G.~Tsoumakas and I.~Vlahavas, ``Random k-labelsets: An ensemble method for multilabel classification,'' in \emph{Proc. Eur. Conf. Mach. Learn.}, 2007, pp.~406--417, \href{https://doi.org/10.1007/978-3-540-74958-5_38}{\nolinkurl{https://doi.org/10.1007/978-3-540-74958-5_38}}.
+
+\bibitem{jia2025}
+L.~Zhang, T.~Li, H.~Cui, Q.~Zhang, Z.~Jiang, J.~Li, R.~E.~Welsch, and Z.~Jia, ``A novel prediction model for multimodal medical data based on graph neural networks,'' \emph{Mach. Learn. Knowl. Extr.}, vol.~7, no.~3, art.~no.~92, 2025, \href{https://doi.org/10.3390/make7030092}{\nolinkurl{https://doi.org/10.3390/make7030092}}.
+
+\bibitem{hollmann2025}
+N.~Hollmann, S.~M\"{u}ller, L.~Purucker, A.~Krishnakumar, M.~K\"{o}rfer, S.~B.~Hoo, R.~T.~Schirrmeister, and F.~Hutter, ``Accurate predictions on small data with a tabular foundation model,'' \emph{Nature}, vol.~637, no.~8045, pp.~319--326, 2025, \href{https://doi.org/10.1038/s41586-024-08328-6}{\nolinkurl{https://doi.org/10.1038/s41586-024-08328-6}}.
+
+\bibitem{tabpfn3report}
+L.~Grinsztajn \emph{et al.}, ``TabPFN-3: Technical report,'' arXiv:2605.13986, 2026, \href{https://doi.org/10.48550/arXiv.2605.13986}{\nolinkurl{https://doi.org/10.48550/arXiv.2605.13986}}.
+
+\bibitem{uci2020}
+S.~Golovenkin, V.~Shulman, D.~Rossiev, P.~Shesternya, S.~Nikulina, Y.~Orlova, and V.~Voino-Yasenetsky, ``Myocardial infarction complications,'' UCI Machine Learning Repository, 2020, \href{https://doi.org/10.24432/C53P5M}{\nolinkurl{https://doi.org/10.24432/C53P5M}}.
+
+\bibitem{almurshedi2026data}
+A.~A.~R.~Al-Murshedi, ``A data set extracted from the Myocardial Infarction Registry (MR),'' Mendeley Data, ver.~1, Mar.~2, 2026, \href{https://doi.org/10.17632/2v7n2r3xch.1}{\nolinkurl{https://doi.org/10.17632/2v7n2r3xch.1}}.
+
+\bibitem{balint2026}
+C.~B\'alint, A.~A.~R.~Al-Murshedi, A.~M.~Jaber, A.~Pakai, and Z.~Verz\'ar, ``Temperature-defined heat-alert-threshold days and acute myocardial infarction admissions and mortality: A nationwide Hungarian registry-based cohort study,'' \emph{Int. J. Environ. Res. Public Health}, vol.~23, no.~8, art.~no.~1010, Aug.~2026, \href{https://doi.org/10.3390/ijerph23081010}{\nolinkurl{https://doi.org/10.3390/ijerph23081010}}.
+
+\bibitem{stekhoven2012}
+D.~J.~Stekhoven and P.~B\"{u}hlmann, ``MissForest---non-parametric missing value imputation for mixed-type data,'' \emph{Bioinformatics}, vol.~28, no.~1, pp.~112--118, 2012, \href{https://doi.org/10.1093/bioinformatics/btr597}{\nolinkurl{https://doi.org/10.1093/bioinformatics/btr597}}.
+
+\bibitem{sechidis2011}
+K.~Sechidis, G.~Tsoumakas, and I.~Vlahavas, ``On the stratification of multi-label data,'' in \emph{Proc. Eur. Conf. Mach. Learn.}, 2011, pp.~145--158, \href{https://doi.org/10.1007/978-3-642-23808-6_10}{\nolinkurl{https://doi.org/10.1007/978-3-642-23808-6_10}}.
+
+\bibitem{charte2015}
+F.~Charte, A.~J.~Rivera, M.~J.~del~Jesus, and F.~Herrera, ``MLSMOTE: Approaching imbalanced multilabel learning through synthetic instance generation,'' \emph{Knowledge-Based Syst.}, vol.~89, pp.~385--397, 2015, \href{https://doi.org/10.1016/j.knosys.2015.07.019}{\nolinkurl{https://doi.org/10.1016/j.knosys.2015.07.019}}.
+
+\bibitem{chen2016}
+T.~Chen and C.~Guestrin, ``XGBoost: A scalable tree boosting system,'' in \emph{Proc. 22nd ACM SIGKDD Int. Conf. Knowl. Discov. Data Min.}, 2016, pp.~785--794, \href{https://doi.org/10.1145/2939672.2939785}{\nolinkurl{https://doi.org/10.1145/2939672.2939785}}.
+
+\bibitem{ke2017}
+G.~Ke, Q.~Meng, T.~Finley, T.~Wang, W.~Chen, W.~Ma, Q.~Ye, and T.-Y.~Liu, ``LightGBM: A highly efficient gradient boosting decision tree,'' in \emph{Proc. Adv. Neural Inf. Process. Syst.}, 2017, vol.~30, pp.~3146--3154, \href{https://proceedings.neurips.cc/paper_files/paper/2017/hash/6449f44a102fde848669bdd9eb6b76fa-Abstract.html}{official NeurIPS proceedings page}.
+
+\bibitem{prokhorenkova2018}
+L.~Prokhorenkova, G.~Gusev, A.~Vorobev, A.~V.~Dorogush, and A.~Gulin, ``CatBoost: Unbiased boosting with categorical features,'' in \emph{Proc. Adv. Neural Inf. Process. Syst.}, 2018, vol.~31, pp.~6638--6648, \href{https://proceedings.neurips.cc/paper_files/paper/2018/hash/14491b756b3a51daac41c24863285549-Abstract.html}{official NeurIPS proceedings page}.
+
+\bibitem{ridnik2021}
+T.~Ridnik, E.~Ben-Baruch, N.~Zamir, A.~Noy, I.~Friedman, M.~Protter, and L.~Zelnik-Manor, ``Asymmetric loss for multi-label classification,'' in \emph{Proc. IEEE/CVF Int. Conf. Comput. Vis.}, 2021, pp.~82--91, \href{https://doi.org/10.1109/ICCV48922.2021.00015}{\nolinkurl{https://doi.org/10.1109/ICCV48922.2021.00015}}.
+
+\bibitem{delong1988}
+E.~R.~DeLong, D.~M.~DeLong, and D.~L.~Clarke-Pearson, ``Comparing the areas under two or more correlated receiver operating characteristic curves: A nonparametric approach,'' \emph{Biometrics}, vol.~44, no.~3, pp.~837--845, 1988, \href{https://doi.org/10.2307/2531595}{\nolinkurl{https://doi.org/10.2307/2531595}}.
+
+\bibitem{good2000}
+P.~I.~Good, \emph{Permutation Tests: A Practical Guide to Resampling Methods for Testing Hypotheses}, 2nd ed. New York, NY, USA: Springer, 2000, \href{https://doi.org/10.1007/978-1-4757-3235-1}{\nolinkurl{https://doi.org/10.1007/978-1-4757-3235-1}}.
+
+\bibitem{benjamini1995}
+Y.~Benjamini and Y.~Hochberg, ``Controlling the false discovery rate: A practical and powerful approach to multiple testing,'' \emph{J. Roy. Statist. Soc. Ser. B}, vol.~57, no.~1, pp.~289--300, 1995, \href{https://doi.org/10.1111/j.2517-6161.1995.tb02031.x}{\nolinkurl{https://doi.org/10.1111/j.2517-6161.1995.tb02031.x}}.
+
+\bibitem{efron1994}
+B.~Efron and R.~J.~Tibshirani, \emph{An Introduction to the Bootstrap}. New York, NY, USA: Chapman \& Hall, 1993, \href{https://doi.org/10.1201/9780429246593}{\nolinkurl{https://doi.org/10.1201/9780429246593}}.
+
+\bibitem{brier1950}
+G.~W.~Brier, ``Verification of forecasts expressed in terms of probability,'' \emph{Mon. Weather Rev.}, vol.~78, no.~1, pp.~1--3, 1950, \href{https://doi.org/10.1175/1520-0493(1950)078\%3C0001:VOFEIT\%3E2.0.CO;2}{\nolinkurl{https://doi.org/10.1175/1520-0493(1950)078<0001:VOFEIT>2.0.CO;2}}.
+
+\end{thebibliography}
+
+%=============================================================================
+% Keep all biographies in one natural-height column box. This prevents the
+% infinitely stretchable inter-biography glue in the stock IEEE environment
+% from distributing the entries over an otherwise empty final page.
+\begin{minipage}{\columnwidth}
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{author_photos/LiaoRunqing.jpg}}]{Runqing Liao}
+is currently pursuing the B.S. degree in Data Science and Big Data Technology with the School of Mathematics and Statistics, Hanshan Normal University, Chaozhou, China. His research interests include machine learning, deep learning, medical data analysis, and medical image analysis.
+\end{IEEEbiography}
+
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{author_photos/YangXiaopeng.jpg}}]{Xiaopeng Yang}
+received the M.S. degree from South China Normal University, Guangzhou, China, and the Ph.D. degree from Guangzhou University, Guangzhou, China. He is currently a Professor with the School of Mathematics and Statistics, Hanshan Normal University, Chaozhou, China. He has also served as a Deputy Dean of the School of Mathematics and Statistics. His research interests include fuzzy relation systems, fuzzy mathematical programming, optimization theory, machine learning, and artificial intelligence.
+\end{IEEEbiography}
+
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{author_photos/WangZhining.jpg}}]{Zhining Wang}
+received the M.S. degree from South China Normal University, Guangzhou, China. He is currently a Lecturer with the School of Mathematics and Statistics, Hanshan Normal University, Chaozhou, China. His research interests include statistical inference, applied mathematical modeling, machine learning, and artificial intelligence.
+\end{IEEEbiography}
+\end{minipage}
+
+\EOD
+\end{document}

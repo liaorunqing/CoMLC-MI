@@ -259,18 +259,26 @@ def paired_metric_difference(
     metric_names: list[str],
     model_a: str,
     model_b: str,
+    point_estimates: dict[str, dict[str, float]] | None = None,
 ) -> pd.DataFrame:
     difference = arrays[model_a] - arrays[model_b]
     rows = []
     for column, metric in enumerate(metric_names):
         low, high = np.quantile(difference[:, column], [0.025, 0.975])
+        estimate = (
+            point_estimates[model_a][metric] - point_estimates[model_b][metric]
+            if point_estimates is not None
+            else float(difference[:, column].mean())
+        )
         rows.append(
             {
                 "contrast": f"{model_a} - {model_b}",
                 "metric": metric,
+                "estimate": float(estimate),
                 "mean_bootstrap_difference": float(difference[:, column].mean()),
                 "ci_low": float(low),
                 "ci_high": float(high),
+                "interval_scope": "conditional on saved mean repeated-OOF predictions; no model refitting",
             }
         )
     return pd.DataFrame(rows)

@@ -1,0 +1,31 @@
+key,manuscript_title,manuscript_year,doi,crossref_status,crossref_title,crossref_year,crossref_first_author,doi_resolves,title_similarity,year_match
+elashmawi2024,"Multi-target classification for predicting myocardial infarction complications: A comparative analysis of various machine learning techniques,",2024,10.1109/MIUCC62295.2024.10783524,200,Multi-Target Classification for Predicting Myocardial Infarction Complications: A Comparative Analysis of Various Machine Learning Techniques,2024.0,Elashmawi,True,1.0,True
+makhmudov2025,"A multitask deep learning model for predicting myocardial infarction complications,",2025,10.3390/bioengineering12050520,200,A Multitask Deep Learning Model for Predicting Myocardial Infarction Complications,2025.0,Makhmudov,False,1.0,True
+christodoulou2019,"A systematic review shows no performance benefit of machine learning over logistic regression for clinical prediction models,",2019,10.1016/j.jclinepi.2019.02.004,200,A systematic review shows no performance benefit of machine learning over logistic regression for clinical prediction models,2019.0,Christodoulou,True,1.0,True
+futoma2020,"The myth of generalisability in clinical research and machine learning in health care,",2020,10.1016/S2589-7500(20)30186-2,200,The myth of generalisability in clinical research and machine learning in health care,2020.0,Futoma,True,1.0,True
+chen2019mlgcn,"Multi-label image recognition with graph convolutional networks,",2019,10.1109/CVPR.2019.00532,200,Multi-Label Image Recognition With Graph Convolutional Networks,2019.0,Chen,True,1.0,True
+wang2020,"Multi-label classification with label graph superimposing,",2020,10.1609/aaai.v34i07.6909,200,Multi-Label Classification with Label Graph Superimposing,2020.0,Wang,True,1.0,True
+vancalster2019,"Calibration: The Achilles heel of predictive analytics,",2019,10.1186/s12916-019-1466-7,200,Calibration: the Achilles heel of predictive analytics,2019.0,,True,1.0,True
+zhang2014,"A review on multi-label learning algorithms,",2014,10.1109/TKDE.2013.39,200,A Review on Multi-Label Learning Algorithms,2014.0,Zhang,True,1.0,True
+gibaja2015,"A tutorial on multilabel learning,",2015,10.1145/2716262,200,A Tutorial on Multilabel Learning,2015.0,Gibaja,False,1.0,True
+tsoumakas2007b,"Mining multi-label data,",2009,10.1007/978-0-387-09823-4_34,200,Mining Multi-label Data,2009.0,Tsoumakas,True,1.0,True
+read2011,"Classifier chains for multi-label classification,",2011,10.1007/s10994-011-5256-5,200,Classifier chains for multi-label classification,2011.0,Read,True,1.0,True
+tsoumakas2007,"Random k-labelsets: An ensemble method for multilabel classification,",2007,10.1007/978-3-540-74958-5_38,200,Random k-Labelsets: An Ensemble Method for Multilabel Classification,2007.0,Tsoumakas,True,1.0,True
+jia2025,"A novel prediction model for multimodal medical data based on graph neural networks,",2025,10.3390/make7030092,200,A Novel Prediction Model for Multimodal Medical Data Based on Graph Neural Networks,2025.0,Zhang,False,1.0,True
+hollmann2025,"Accurate predictions on small data with a tabular foundation model,",2025,10.1038/s41586-024-08328-6,200,Accurate predictions on small data with a tabular foundation model,2025.0,Hollmann,True,1.0,True
+tabpfn3report,"TabPFN-3: Technical report,",2026,10.48550/arXiv.2605.13986,404,,,,True,,
+uci2020,"Myocardial infarction complications,",2020,10.24432/C53P5M,404,,,,True,,
+almurshedi2026data,"A data set extracted from the Myocardial Infarction Registry (MR),",2026,10.17632/2v7n2r3xch.1,404,,,,True,,
+balint2026,"Temperature-defined heat-alert-threshold days and acute myocardial infarction admissions and mortality: A nationwide Hungarian registry-based cohort study,",2026,10.3390/ijerph23081010,200,Temperature-Defined Heat-Alert-Threshold Days and Acute Myocardial Infarction Admissions and Mortality: A Nationwide Hungarian Registry-Based Cohort Study,2026.0,Bálint,False,1.0,True
+stekhoven2012,"MissForest---non-parametric missing value imputation for mixed-type data,",2012,10.1093/bioinformatics/btr597,200,MissForest—non-parametric missing value imputation for mixed-type data,2012.0,Stekhoven,False,1.0,True
+sechidis2011,"On the stratification of multi-label data,",2011,10.1007/978-3-642-23808-6_10,200,On the Stratification of Multi-label Data,2011.0,Sechidis,True,1.0,True
+charte2015,"MLSMOTE: Approaching imbalanced multilabel learning through synthetic instance generation,",2015,10.1016/j.knosys.2015.07.019,200,MLSMOTE: Approaching imbalanced multilabel learning through synthetic instance generation,2015.0,Charte,True,1.0,True
+chen2016,"XGBoost: A scalable tree boosting system,",2016,10.1145/2939672.2939785,200,XGBoost,2016.0,Chen,False,1.0,True
+ke2017,"LightGBM: A highly efficient gradient boosting decision tree,",2017,,no DOI,,,,,,
+prokhorenkova2018,"CatBoost: Unbiased boosting with categorical features,",2018,,no DOI,,,,,,
+ridnik2021,"Asymmetric loss for multi-label classification,",2021,10.1109/ICCV48922.2021.00015,200,Asymmetric Loss For Multi-Label Classification,2021.0,Ridnik,True,1.0,True
+delong1988,"Comparing the areas under two or more correlated receiver operating characteristic curves: A nonparametric approach,",1988,10.2307/2531595,200,Comparing the Areas under Two or More Correlated Receiver Operating Characteristic Curves: A Nonparametric Approach,1988.0,DeLong,True,1.0,True
+good2000,,2000,10.1007/978-1-4757-3235-1,200,Permutation Tests,2000.0,Good,True,,True
+benjamini1995,"Controlling the false discovery rate: A practical and powerful approach to multiple testing,",1995,10.1111/j.2517-6161.1995.tb02031.x,200,Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing,1995.0,Benjamini,False,1.0,True
+efron1994,,1993,10.1201/9780429246593,200,An Introduction to the Bootstrap,1994.0,Efron,True,,False
+brier1950,"Verification of forecasts expressed in terms of probability,",1950,10.1175/1520-0493(1950)078<0001:VOFEIT>2.0.CO;2,200,VERIFICATION OF FORECASTS EXPRESSED IN TERMS OF PROBABILITY,1950.0,BRIER,False,1.0,True

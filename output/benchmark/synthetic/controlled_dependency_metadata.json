@@ -1,0 +1,31 @@
+{
+  "design": {
+    "n_samples": 1000,
+    "n_features": 50,
+    "n_labels": 10,
+    "n_informative": 15,
+    "prevalence": 0.1,
+    "feature_signal": 0.65
+  },
+  "rho_levels": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    0.9
+  ],
+  "n_runs": 10,
+  "gcn_epochs_max": 80,
+  "split": {
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "models": [
+    "BR",
+    "CC",
+    "BR-kNN (distance-weighted, k=10)",
+    "GCN"
+  ],
+  "interpretation": "rho is the residual-correlation parameter. realized_lds is the observed binary-label metric and is the only dependency value used in reporting."
+}

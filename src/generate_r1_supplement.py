@@ -1,4 +1,4 @@
-"""Generate supplementary LaTeX tables from the locked R1 result files."""
+"""Generate appendix LaTeX tables from the benchmark result files."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from .revision_features import LABEL_COLS, prepare_outcomes
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RESULTS = ROOT / "output" / "revision_r1"
+RESULTS = ROOT / "output" / "benchmark"
 OUTPUT = ROOT / "paper" / "generated_r1"
 
 
@@ -143,7 +143,7 @@ def outcome_definitions() -> None:
 
 def fold_summary() -> None:
     assignments = pd.read_csv(RESULTS / "outer_fold_assignments.csv")
-    config = json.loads((ROOT / "configs" / "access_2026_35668_r1.json").read_text(encoding="utf-8"))
+    config = json.loads((ROOT / "configs" / "comlc_mi_benchmark.json").read_text(encoding="utf-8"))
     outcomes = prepare_outcomes(pd.read_csv(ROOT / config["dataset"]))
     rows = []
     repeat_columns = [column for column in assignments if column.startswith("repeat_")]
@@ -234,7 +234,7 @@ def primary_inference() -> None:
         ])
     longtable(
         OUTPUT / "supp_primary_inference.tex",
-        "Per-label primary paired comparison: weighted ensemble minus TabPFN.",
+        "Per-label primary paired comparison: weighted ensemble minus TabPFN-3.",
         "tab:supp_primary_inference",
         ["Label", "Events", "Test", "$\\Delta$AUROC", "95\\% CI", "$p$", "BH $q$", "Reject", "Stability"],
         rows,
@@ -259,6 +259,18 @@ def calibration_intervals() -> None:
         rows,
         "llrlrrrl",
         r"\tiny",
+    )
+    sensitivity = pd.read_csv(RESULTS / "calibration_sensitivity_unweighted_lr_metrics.csv")
+    per_label = pd.read_csv(RESULTS / "calibration_sensitivity_unweighted_lr_per_label.csv")
+    row = sensitivity.iloc[0]
+    stable = per_label.query("calibration_stability == 'stable'")
+    scaled_tabular(
+        OUTPUT / "appendix_unweighted_lr_calibration.tex",
+        "Unweighted BR-logistic calibration sensitivity from the same mean repeated OOF predictions. This appendix analysis does not alter the primary model ranking.",
+        "tab:app_unweighted_lr",
+        ["Model", "Macro-AUROC", "Macro-AUPRC", "Brier", "ECE$_{10}$", "Macro-F1", "Median intercept", "Median slope"],
+        [["BR--LR (unweighted)", number(row["macro_auroc"], 4), number(row["macro_auprc"], 4), number(row["brier"], 4), number(row["ece_10"], 4), number(row["macro_f1_0_5"], 4), number(stable["calibration_intercept"].median(), 3), number(stable["calibration_slope"].median(), 3)]],
+        "lrrrrrrr",
     )
 
 
@@ -347,10 +359,10 @@ def external_table() -> None:
 
     frame = pd.read_csv(folder / "external_transportability_results.csv")
     indexed = frame.set_index(["cohort", "endpoint", "subset", "model"])
-    primary = indexed.loc[("Hungarian AMI registry", "death_30d", "all first events", "TabPFN v2")]
-    complete_30 = indexed.loc[("Hungarian AMI registry", "death_30d", "complete case", "TabPFN v2")]
-    seven = indexed.loc[("Hungarian AMI registry", "death_7d", "all first events", "TabPFN v2")]
-    complete_7 = indexed.loc[("Hungarian AMI registry", "death_7d", "complete case", "TabPFN v2")]
+    primary = indexed.loc[("Hungarian AMI registry", "death_30d", "all first events", "TabPFN-3")]
+    complete_30 = indexed.loc[("Hungarian AMI registry", "death_30d", "complete case", "TabPFN-3")]
+    seven = indexed.loc[("Hungarian AMI registry", "death_7d", "all first events", "TabPFN-3")]
+    complete_7 = indexed.loc[("Hungarian AMI registry", "death_7d", "complete case", "TabPFN-3")]
     first_n = int(primary["n"])
     complete_n = int(complete_30["n"])
     selection_rows = [
@@ -417,7 +429,7 @@ def main() -> None:
     synthetic_table()
     temporal_table()
     external_table()
-    print(f"Supplementary table fragments written to {OUTPUT.resolve()}")
+    print(f"Appendix table fragments written to {OUTPUT.resolve()}")
 
 
 if __name__ == "__main__":

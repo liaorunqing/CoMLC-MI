@@ -25,7 +25,7 @@ MODEL_NAMES = [
     "BR-CatBoost",
     "ECC-LightGBM",
     "LP-RF",
-    "RAkEL-RF",
+    "RAkELd-RF",
     "Shared-MLP",
     "MultiTask-DNN",
     "TabPFN",
@@ -120,7 +120,7 @@ def _fit_binary_relevance(
         if model_name == "BR-LR":
             estimator = LogisticRegression(
                 max_iter=params.get("max_iter", 5000),
-                class_weight="balanced",
+                class_weight=params.get("class_weight", "balanced"),
                 random_state=local_seed,
                 solver="liblinear",
             )
@@ -502,7 +502,7 @@ def fit_predict_model(
         )
     if model_name == "ECC-LightGBM":
         return _fit_ecc_lightgbm(x_train, y_train, x_test, seed, params)
-    if model_name in {"LP-RF", "RAkEL-RF"}:
+    if model_name in {"LP-RF", "RAkELd-RF"}:
         return _fit_problem_transform(model_name, x_train, y_train, x_test, seed, params)
     if model_name == "TabPFN":
         return _fit_tabpfn(

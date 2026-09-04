@@ -1,124 +1,93 @@
-# CoMLC-MI — IEEE Access R1 reproducibility package
+# CoMLC-MI
 
-This repository contains the technical reconstruction for manuscript
-`Access-2026-35668`. The formal internal benchmark predicts 12 coded outcomes
-from 1,700 patients in the historical Krasnoyarsk myocardial-infarction cohort.
+Code, configurations, aggregate results, and reproducibility materials for the
+CoMLC-MI benchmark of multi-label myocardial-infarction complication
+prediction.
 
-## Scope and interpretation
+## Study scope
 
-- The primary internal feature contract is `admission_safe_v1`: 89 measured
-  admission-time predictors plus two fold-generated missingness indicators
-  (91 variables total).
-- Nine interval-count variables, 11 variables with ambiguous inpatient timing,
-  and eight invalid interactions formerly constructed after standardization are
-  excluded from the primary analysis.
-- The prospective sensitivity horizons contain 91, 94, 97, and 100 variables.
-  The 111-variable source-dictionary set is retrospective sensitivity analysis
-  only.
-- The contemporary Hungarian registry is used only for a cross-cohort mortality
-  transportability stress test with four shared admission variables. It does not
-  validate the other 11 outcomes, label-dependency modeling, or the complete
-  internal benchmark.
-- The models are research benchmarks and are not suitable for clinical use.
-- The label dependency score is a prevalence-dependent descriptive statistic,
-  not a universal architecture-selection threshold.
+The internal benchmark evaluates ten model families for 12 source-coded
+hospitalization outcomes in 1,700 patients from the Krasnoyarsk Myocardial
+Infarction Complications Database. The primary `admission_safe_v1` contract has
+89 variables identified by the source dictionary as admission-stage information
+and two missingness indicators generated inside each training fold (91 inputs).
+This is not claimed to be a strictly pretreatment feature set because exact
+treatment timestamps are unavailable for seven retained fibrinolysis fields.
 
-## Formal reproduction command
+The Hungarian registry analysis is a separate cross-cohort mortality
+transportability stress test. It uses only four harmonized admission variables
+and therefore does not validate the other 11 outcomes, the 91-variable internal
+benchmark, or label-dependency modeling. None of the released models is intended
+for clinical deployment.
+
+## Reproduce the benchmark
+
+Install the recorded dependencies, then run:
 
 ```powershell
-python -m src.run_revision --config configs/access_2026_35668_r1.json
+python -m src.run_benchmark --config configs/comlc_mi_benchmark.json
 ```
 
-The command executes the locked analysis:
+The configuration fixes the 5-repeat × 5-fold outer validation, four inner
+folds, preprocessing, model hyperparameters, 2,000 paired bootstrap resamples,
+label-wise tests, ten-seed graph ablation, temporal sensitivity analysis, and
+controlled synthetic experiment. Checkpoints allow interrupted runs to resume;
+optional stage and shard arguments change scheduling only, not the analysis
+contract.
 
-1. five repeats of five outer multilabel-stratified folds;
-2. four inner folds for ensemble weights and training-round decisions;
-3. fold-local imputation, scaling, and TabPFN top-80 feature selection;
-4. ten model families plus equal and inner-OOF-weighted LP-RF–TabPFN ensembles;
-5. 2,000 paired patient bootstrap resamples, per-label DeLong/permutation tests,
-   BH correction, calibration intervals, and reliability data;
-6. the 18-configuration GCN ablation across seeds 42–51;
-7. the four-horizon neural sensitivity analysis and controlled synthetic study;
-8. the locked external mortality transportability stress test.
+TabPFN results were produced with `tabpfn==8.0.1` and the TabPFN-3 classifier
+checkpoint `tabpfn-v3-classifier-v3_default.ckpt` (SHA-256
+`D0D865D54DFBC524F5703104BE90620182DCA7E5FB2C16DE72E9959EA18F3988`).
+The licensed checkpoint is resolved through TabPFN's supported cache and is not
+redistributed here.
 
-The external patient-level workbook is deliberately not distributed. On a
-local machine, set `HUNGARIAN_MI_XLSX` to the downloaded workbook path; if the
-variable is absent, the runner checks the standard Downloads folder. No
-Hungarian patient-level data enter the repository or supplementary ZIP.
+## Methods implemented
 
-## Recovery and audit stages
+- Fold-local imputation, scaling, feature selection, and training decisions.
+- BR-LR, BR-XGBoost, BR-LightGBM, BR-CatBoost, ECC-LightGBM, LP-RF,
+  RAkELd-RF, shared MLP, multitask DNN, and TabPFN-3.
+- Equal and inner-OOF-weighted LP-RF–TabPFN-3 ensembles.
+- AUROC, AUPRC, Brier score, equal-frequency 10-bin ECE, and fixed-threshold
+  Macro-F1, with patient-level paired uncertainty analyses.
+- A paired-seed 18-configuration label-graph experiment and a controlled
+  synthetic dependency experiment using `BR-kNN (distance-weighted, k=10)`.
 
-The formal command is checkpointed by outer fold. For inspection or recovery,
-the same entry point accepts `--stage` with `splits`, `internal`, `summarize`,
-`gcn`, `temporal`, `synthetic`, or `external`. These switches do not change the
-locked configuration; they only select which stage is executed.
+## Repository layout
 
-Long internal, GCN, and synthetic stages also support disjoint recovery shards
-(`--fold-shard-index/--fold-shards`, `--gcn-shard-index/--gcn-shards`,
-`--temporal-shard-index/--temporal-shards`, and
-`--synthetic-shard-index/--synthetic-shards`). Shards write only fold-, seed-,
-horizon-, or repetition-level checkpoints. A final unsharded stage call is required to
-assemble and statistically summarize the locked outputs.
+- `configs/comlc_mi_benchmark.json`: canonical analysis specification.
+- `src/run_benchmark.py`: canonical command-line entry point.
+- `src/`: modeling, statistical analysis, figure generation, and audit code.
+- `output/benchmark/`: machine-readable benchmark results and metadata.
+- `paper/`: manuscript source, appendices, generated tables, and figures.
+- `tests/`: leakage, feature-contract, statistical, model, and packaging tests.
 
-The temporal stage may additionally be distributed over the 25 repeated outer
-folds with `--temporal-fold-shard-index/--temporal-fold-shards`. Horizon and
-fold sharding may be combined; they change scheduling only, not folds, seeds,
-models, or estimates.
+The machine-readable results include five outer-fold OOF predictions per
+patient and their mean, fold indices, aggregate and per-label metrics,
+calibration summaries, graph and synthetic experiment outputs, environment
+metadata, and SHA-256 manifests. Reported bootstrap intervals condition on the
+saved mean OOF predictions and do not propagate full model-retraining
+uncertainty.
 
-## Main files
-
-- `configs/access_2026_35668_r1.json` — formal feature, validation, model,
-  statistical, ablation, synthetic, and release specification.
-- `src/run_revision.py` — only formal orchestration entry point.
-- `src/revision_features.py` — feature contracts and fold-local preprocessing.
-- `src/revision_models.py` — uniform model adapters and inner-OOF weighting.
-- `src/revision_metrics.py` — paired bootstrap, calibration, DeLong,
-  permutation, and BH analysis.
-- `src/revision_gcn.py` — paired 18-configuration, 10-seed GCN ablation.
-- `src/revision_temporal.py` — 91/94/97/100-variable horizon analysis.
-- `src/generate_r1_figures.py` — vector-first manuscript figures.
-- `tests/` — leakage, feature-count, loss, split, seed, statistics, GCN,
-  synthetic, and external-count tests.
-
-## Output contract
-
-Formal outputs are written to `output/revision_r1/` and include:
-
-- five OOF predictions per patient and their average;
-- outer-fold assignments and per-fold decision metadata;
-- model and per-label metrics;
-- paired differences, bootstrap arrays, calibration bins, and intervals;
-- full 10-seed GCN and synthetic results;
-- external aggregate results and predictions required for audit;
-- runtime package versions and a SHA-256 manifest.
-
-Run the test gate with:
+Run the automated checks with:
 
 ```powershell
 python -m pytest -q
-python -m src.revision_r1_qa --level analysis
 ```
 
-After the clean manuscript, highlighted PDF, response letter, and supplement
-have been compiled and visually inspected, build and verify the upload bundle:
+## Data and privacy
 
-```powershell
-python -m src.package_r1_submission
-python -m src.revision_r1_qa --level submission
-```
+The internal source data are available from the UCI Machine Learning Repository.
+The Hungarian registry extract is available from Mendeley Data at
+<https://doi.org/10.17632/2v7n2r3xch.1>. Obtain it directly from the source and
+set `HUNGARIAN_MI_XLSX` to the local workbook path when running the external
+analysis.
 
-The package builder uses an explicit whitelist. It excludes the Hungarian raw
-workbook, every patient-level prediction archive, and all bootstrap draw arrays
-from the supplementary ZIP.
+This repository does not distribute the Hungarian workbook, patient-level
+Hungarian predictions, external bootstrap arrays, or licensed TabPFN-3 weights.
+Only aggregate external results and calibration-bin summaries are public.
 
-The fixed public release tag is `access-2026-35668-r1`. Manuscript claims,
-tables, figures, supplementary files, and the response letter must be generated
-from the fixed-tag outputs; older working directories are not authoritative.
+## Ethics note
 
-## Ethics and data boundary
-
-This work is a secondary analysis of public, de-identified datasets. Under the
-authors' institutional policy, no new ethics approval or informed consent is
-required for this secondary analysis. The revised manuscript also cites the
-ethics information reported for each original cohort. This wording requires
-final confirmation by the corresponding author before resubmission.
+The study uses public, de-identified data and cites the governance statements of
+the source cohorts. The manuscript's institution-specific secondary-analysis
+ethics wording must be confirmed by the corresponding author before submission.

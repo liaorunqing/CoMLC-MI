@@ -19,6 +19,7 @@ SOURCE = ROOT / "revision" / "response_to_reviewers.md"
 OUTPUT = ROOT / "revision" / "response_to_reviewers.docx"
 
 BLUE = "1F4E79"
+BLACK = "000000"
 PALE_BLUE = "D9EAF7"
 PALE_YELLOW = "FFF2CC"
 GRAY = "666666"
@@ -89,10 +90,13 @@ def configure_document(doc: Document) -> None:
         style = doc.styles[name]
         style.font.name = "Arial"
         style.font.size = Pt(size)
-        style.font.color.rgb = RGBColor.from_string(color)
+        style.font.color.rgb = RGBColor.from_string(BLACK)
         style.font.bold = True
         style._element.rPr.rFonts.set(qn("w:eastAsia"), "Arial")
         style.paragraph_format.keep_with_next = True
+        borders = style._element.pPr.find(qn("w:pBdr")) if style._element.pPr is not None else None
+        if borders is not None:
+            style._element.pPr.remove(borders)
 
     doc.styles["Heading 1"].paragraph_format.space_before = Pt(4)
     doc.styles["Heading 1"].paragraph_format.space_after = Pt(8)
@@ -128,11 +132,36 @@ def generate() -> None:
     lines = SOURCE.read_text(encoding="utf-8").splitlines()
     doc = Document()
     configure_document(doc)
+    active_table = None
 
     for raw in lines:
         line = raw.strip()
         if not line:
+            active_table = None
             continue
+
+        if line.startswith("|") and line.endswith("|"):
+            cells = [cell.strip() for cell in line.strip("|").split("|")]
+            if all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells):
+                continue
+            if active_table is None:
+                active_table = doc.add_table(rows=0, cols=len(cells))
+                active_table.style = "Table Grid"
+            row = active_table.add_row()
+            for index, value in enumerate(cells):
+                paragraph = row.cells[index].paragraphs[0]
+                add_inline(paragraph, value)
+                for run in paragraph.runs:
+                    run.font.size = Pt(8.5)
+                    if len(active_table.rows) == 1:
+                        run.bold = True
+                        run.font.color.rgb = RGBColor.from_string(BLUE)
+                if len(active_table.rows) == 1:
+                    shading = OxmlElement("w:shd")
+                    shading.set(qn("w:fill"), PALE_BLUE)
+                    row.cells[index]._tc.get_or_add_tcPr().append(shading)
+            continue
+        active_table = None
 
         if line.startswith("# "):
             paragraph = doc.add_paragraph(style="Title")
@@ -147,11 +176,10 @@ def generate() -> None:
 
         if line.startswith("## "):
             heading = line[3:]
-            if heading.startswith("Reviewer"):
+            if heading.startswith("Reviewer") or heading == "Technical Audit Summary":
                 doc.add_page_break()
             paragraph = doc.add_paragraph(style="Heading 1")
             add_inline(paragraph, heading)
-            set_cellless_paragraph_shading(paragraph, PALE_BLUE)
             continue
 
         if line.startswith("### "):
@@ -166,12 +194,6 @@ def generate() -> None:
 
         paragraph = doc.add_paragraph(style="Reviewer block" if line.startswith("**") else "Normal")
         add_inline(paragraph, line)
-        if line.startswith("**Concern."):
-            set_cellless_paragraph_shading(paragraph, "F2F2F2")
-        elif line.startswith("**Response."):
-            set_cellless_paragraph_shading(paragraph, "EAF2F8")
-        elif line.startswith("**Action."):
-            set_cellless_paragraph_shading(paragraph, PALE_YELLOW)
         if line.startswith("**Manuscript ID:") or line.startswith("**Original title:") or line.startswith("**Revised title:"):
             paragraph.paragraph_format.space_after = Pt(2)
 

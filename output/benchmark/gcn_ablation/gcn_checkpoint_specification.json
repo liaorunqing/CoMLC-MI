@@ -1,0 +1,49 @@
+{
+  "sha256": "b4e05e00de8b21427a6c7c393ea7713234f982c8d0f724883cdcf4d928ef8b83",
+  "feature_contract": "admission_safe_v1",
+  "validation": {
+    "outer_repeats": 5,
+    "outer_folds": 5,
+    "inner_folds": 4,
+    "multilabel_stratification_order": 2
+  },
+  "gcn_ablation": {
+    "seeds": [
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51
+    ],
+    "configurations": 18,
+    "encoder_hidden": [
+      256,
+      128
+    ],
+    "embedding_dim": 64,
+    "graph_hidden": 128,
+    "concat_head_width": 32,
+    "dropout": 0.3,
+    "asymmetric_cutoff": 0.15,
+    "symmetric_cutoff": 0.08,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "max_epochs": 200,
+    "batch_size": 64,
+    "patience": 25,
+    "min_delta": 0.0001,
+    "asymmetric_loss_gamma_negative": [
+      2.0,
+      3.0
+    ],
+    "asymmetric_loss_gamma_positive": 0.0,
+    "asymmetric_loss_clip": 0.05,
+    "paired_initialization_and_batches": true,
+    "positive_weight": "N_negative / N_positive"
+  }
+}

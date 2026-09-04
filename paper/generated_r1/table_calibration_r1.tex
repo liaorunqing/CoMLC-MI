@@ -1,0 +1,16 @@
+\begin{table}[!t]
+\centering
+\caption{Internal calibration summary from mean repeated OOF predictions. Intercept and slope are fitted simultaneously and summarized as medians over labels with at least 30 events; complete per-label bootstrap intervals are in Appendix C.}
+\label{tab:calibration_r1}
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrrr}
+\toprule
+Model & Brier & ECE$_{10}$ & Median intercept & Median slope \\
+\midrule
+TabPFN-3 & 0.0615 & 0.0153 & 0.129 & 0.948 \\
+Weighted ensemble & 0.0619 & 0.0209 & 1.492 & 1.496 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

@@ -1,0 +1,36 @@
+{
+  "python": "3.12.3 | packaged by conda-forge | (main, Apr 15 2024, 18:20:11) [MSC v.1938 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "packages": {
+    "numpy": "2.5.2",
+    "pandas": "2.3.3",
+    "scipy": "1.17.1",
+    "scikit-learn": "1.7.2",
+    "scikit-multilearn": "0.2.0",
+    "xgboost": "3.0.2",
+    "lightgbm": "4.6.0",
+    "catboost": "1.2.8",
+    "tabpfn": "8.0.1",
+    "torch": "2.9.1+cpu",
+    "torch-geometric": "2.8.0",
+    "matplotlib": "3.11.0",
+    "seaborn": "0.13.2",
+    "joblib": "1.5.3"
+  },
+  "config": "configs/comlc_mi_benchmark.json",
+  "config_sha256": "904f247a539d61210fb396f0f9b90500bb4ede1d3f6ba4767adb557dd2f84e68",
+  "tabpfn_model": {
+    "display_name": "TabPFN-3",
+    "package": "tabpfn==8.0.1",
+    "model_path": "auto",
+    "checkpoint_filename": "tabpfn-v3-classifier-v3_default.ckpt",
+    "checkpoint_source": "Prior Labs model cache downloaded by the tabpfn package; weight file is not redistributed",
+    "checkpoint_sha256": "D0D865D54DFBC524F5703104BE90620182DCA7E5FB2C16DE72E9959EA18F3988",
+    "top_features": 80,
+    "selector_estimators": 50,
+    "inner_n_estimators": 2,
+    "n_estimators": 8,
+    "device": "cpu",
+    "n_preprocessing_jobs": 1
+  }
+}

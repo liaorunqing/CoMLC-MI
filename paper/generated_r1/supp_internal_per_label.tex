@@ -1,0 +1,162 @@
+\tiny
+\begin{longtable}{llrrrrrrrl}
+\caption{Per-label metrics for all internal models from mean repeated OOF predictions.}\label{tab:supp_internal_labels}\\
+\toprule
+Model & Label & Events & AUROC & AUPRC & Brier & ECE$_{10}$ & F1 & O:E & Calibration \\
+\midrule
+\endfirsthead
+\multicolumn{10}{c}{\tablename\ \thetable\ (continued)}\\
+\toprule
+Model & Label & Events & AUROC & AUPRC & Brier & ECE$_{10}$ & F1 & O:E & Calibration \\
+\midrule
+\endhead
+\midrule
+\multicolumn{10}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+BR--LR & FIBR\_PREDS & 170 & 0.723 & 0.253 & 0.183 & 0.274 & 0.299 & 0.268 & stable \\
+BR--LR & PREDS\_TAH & 20 & 0.446 & 0.013 & 0.098 & 0.191 & 0.025 & 0.059 & unstable \\
+BR--LR & JELUD\_TAH & 42 & 0.759 & 0.083 & 0.099 & 0.163 & 0.133 & 0.133 & stable \\
+BR--LR & FIBR\_JELUD & 71 & 0.617 & 0.071 & 0.164 & 0.278 & 0.140 & 0.131 & stable \\
+BR--LR & A\_V\_BLOK & 57 & 0.755 & 0.156 & 0.116 & 0.198 & 0.183 & 0.145 & stable \\
+BR--LR & OTEK\_LANC & 159 & 0.649 & 0.154 & 0.207 & 0.306 & 0.226 & 0.234 & stable \\
+BR--LR & RAZRIV & 54 & 0.761 & 0.121 & 0.123 & 0.193 & 0.152 & 0.142 & stable \\
+BR--LR & DRESSLER & 75 & 0.646 & 0.071 & 0.178 & 0.294 & 0.112 & 0.130 & stable \\
+BR--LR & ZSN & 394 & 0.672 & 0.352 & 0.223 & 0.220 & 0.437 & 0.513 & stable \\
+BR--LR & REC\_IM & 159 & 0.630 & 0.156 & 0.210 & 0.314 & 0.223 & 0.229 & stable \\
+BR--LR & P\_IM\_STEN & 148 & 0.678 & 0.155 & 0.205 & 0.308 & 0.238 & 0.220 & stable \\
+BR--LR & LET\_IS & 271 & 0.842 & 0.577 & 0.148 & 0.183 & 0.525 & 0.466 & stable \\
+BR--XGBoost & FIBR\_PREDS & 170 & 0.669 & 0.222 & 0.122 & 0.158 & 0.281 & 0.388 & stable \\
+BR--XGBoost & PREDS\_TAH & 20 & 0.433 & 0.017 & 0.013 & 0.020 & 0.000 & 0.615 & unstable \\
+BR--XGBoost & JELUD\_TAH & 42 & 0.678 & 0.051 & 0.030 & 0.038 & 0.000 & 0.414 & stable \\
+BR--XGBoost & FIBR\_JELUD & 71 & 0.647 & 0.087 & 0.057 & 0.082 & 0.059 & 0.345 & stable \\
+BR--XGBoost & A\_V\_BLOK & 57 & 0.674 & 0.102 & 0.041 & 0.056 & 0.120 & 0.403 & stable \\
+BR--XGBoost & OTEK\_LANC & 159 & 0.604 & 0.123 & 0.124 & 0.151 & 0.114 & 0.386 & stable \\
+BR--XGBoost & RAZRIV & 54 & 0.787 & 0.121 & 0.038 & 0.038 & 0.161 & 0.475 & stable \\
+BR--XGBoost & DRESSLER & 75 & 0.581 & 0.068 & 0.063 & 0.099 & 0.038 & 0.315 & stable \\
+BR--XGBoost & ZSN & 394 & 0.720 & 0.503 & 0.173 & 0.144 & 0.447 & 0.617 & stable \\
+BR--XGBoost & REC\_IM & 159 & 0.609 & 0.141 & 0.122 & 0.158 & 0.167 & 0.373 & stable \\
+BR--XGBoost & P\_IM\_STEN & 148 & 0.699 & 0.190 & 0.115 & 0.159 & 0.235 & 0.354 & stable \\
+BR--XGBoost & LET\_IS & 271 & 0.852 & 0.591 & 0.112 & 0.106 & 0.554 & 0.601 & stable \\
+BR--LightGBM & FIBR\_PREDS & 170 & 0.677 & 0.219 & 0.112 & 0.129 & 0.283 & 0.444 & stable \\
+BR--LightGBM & PREDS\_TAH & 20 & 0.373 & 0.010 & 0.013 & 0.021 & 0.000 & 0.770 & unstable \\
+BR--LightGBM & JELUD\_TAH & 42 & 0.711 & 0.067 & 0.027 & 0.026 & 0.042 & 0.551 & stable \\
+BR--LightGBM & FIBR\_JELUD & 71 & 0.673 & 0.099 & 0.046 & 0.043 & 0.049 & 0.540 & stable \\
+BR--LightGBM & A\_V\_BLOK & 57 & 0.677 & 0.119 & 0.036 & 0.037 & 0.110 & 0.577 & stable \\
+BR--LightGBM & OTEK\_LANC & 159 & 0.617 & 0.127 & 0.108 & 0.099 & 0.112 & 0.487 & stable \\
+BR--LightGBM & RAZRIV & 54 & 0.787 & 0.118 & 0.035 & 0.032 & 0.082 & 0.608 & stable \\
+BR--LightGBM & DRESSLER & 75 & 0.610 & 0.069 & 0.051 & 0.059 & 0.000 & 0.480 & stable \\
+BR--LightGBM & ZSN & 394 & 0.723 & 0.498 & 0.170 & 0.131 & 0.448 & 0.638 & stable \\
+BR--LightGBM & REC\_IM & 159 & 0.622 & 0.148 & 0.105 & 0.109 & 0.121 & 0.472 & stable \\
+BR--LightGBM & P\_IM\_STEN & 148 & 0.689 & 0.199 & 0.094 & 0.095 & 0.182 & 0.489 & stable \\
+BR--LightGBM & LET\_IS & 271 & 0.859 & 0.611 & 0.104 & 0.086 & 0.574 & 0.651 & stable \\
+BR--CatBoost & FIBR\_PREDS & 170 & 0.697 & 0.216 & 0.193 & 0.327 & 0.293 & 0.234 & stable \\
+BR--CatBoost & PREDS\_TAH & 20 & 0.474 & 0.014 & 0.163 & 0.386 & 0.000 & 0.030 & unstable \\
+BR--CatBoost & JELUD\_TAH & 42 & 0.666 & 0.055 & 0.121 & 0.304 & 0.075 & 0.075 & stable \\
+BR--CatBoost & FIBR\_JELUD & 71 & 0.647 & 0.101 & 0.159 & 0.341 & 0.164 & 0.109 & stable \\
+BR--CatBoost & A\_V\_BLOK & 57 & 0.724 & 0.108 & 0.157 & 0.349 & 0.221 & 0.088 & stable \\
+BR--CatBoost & OTEK\_LANC & 159 & 0.639 & 0.154 & 0.206 & 0.350 & 0.199 & 0.211 & stable \\
+BR--CatBoost & RAZRIV & 54 & 0.805 & 0.201 & 0.110 & 0.273 & 0.238 & 0.104 & stable \\
+BR--CatBoost & DRESSLER & 75 & 0.587 & 0.072 & 0.194 & 0.388 & 0.119 & 0.102 & stable \\
+BR--CatBoost & ZSN & 394 & 0.715 & 0.502 & 0.211 & 0.234 & 0.418 & 0.498 & stable \\
+BR--CatBoost & REC\_IM & 159 & 0.620 & 0.149 & 0.217 & 0.364 & 0.220 & 0.204 & stable \\
+BR--CatBoost & P\_IM\_STEN & 148 & 0.671 & 0.158 & 0.191 & 0.334 & 0.247 & 0.207 & stable \\
+BR--CatBoost & LET\_IS & 271 & 0.848 & 0.604 & 0.131 & 0.179 & 0.540 & 0.472 & stable \\
+ECC--LightGBM & FIBR\_PREDS & 170 & 0.690 & 0.245 & 0.085 & 0.027 & 0.065 & 1.245 & stable \\
+ECC--LightGBM & PREDS\_TAH & 20 & 0.395 & 0.016 & 0.012 & 0.010 & 0.000 & 6.867 & unstable \\
+ECC--LightGBM & JELUD\_TAH & 42 & 0.714 & 0.078 & 0.024 & 0.016 & 0.000 & 2.834 & stable \\
+ECC--LightGBM & FIBR\_JELUD & 71 & 0.663 & 0.087 & 0.040 & 0.021 & 0.000 & 1.974 & stable \\
+ECC--LightGBM & A\_V\_BLOK & 57 & 0.715 & 0.110 & 0.032 & 0.017 & 0.000 & 2.060 & stable \\
+ECC--LightGBM & OTEK\_LANC & 159 & 0.635 & 0.133 & 0.086 & 0.042 & 0.000 & 1.414 & stable \\
+ECC--LightGBM & RAZRIV & 54 & 0.801 & 0.121 & 0.031 & 0.018 & 0.000 & 2.220 & stable \\
+ECC--LightGBM & DRESSLER & 75 & 0.601 & 0.070 & 0.043 & 0.025 & 0.000 & 1.684 & stable \\
+ECC--LightGBM & ZSN & 394 & 0.727 & 0.504 & 0.149 & 0.031 & 0.374 & 1.065 & stable \\
+ECC--LightGBM & REC\_IM & 159 & 0.636 & 0.162 & 0.084 & 0.033 & 0.000 & 1.447 & stable \\
+ECC--LightGBM & P\_IM\_STEN & 148 & 0.693 & 0.201 & 0.076 & 0.022 & 0.026 & 1.123 & stable \\
+ECC--LightGBM & LET\_IS & 271 & 0.862 & 0.611 & 0.094 & 0.026 & 0.419 & 1.186 & stable \\
+LP--RF & FIBR\_PREDS & 170 & 0.725 & 0.236 & 0.085 & 0.034 & 0.000 & 1.018 & stable \\
+LP--RF & PREDS\_TAH & 20 & 0.505 & 0.026 & 0.012 & 0.005 & 0.000 & 1.020 & unstable \\
+LP--RF & JELUD\_TAH & 42 & 0.754 & 0.081 & 0.024 & 0.011 & 0.000 & 1.039 & stable \\
+LP--RF & FIBR\_JELUD & 71 & 0.712 & 0.138 & 0.039 & 0.016 & 0.000 & 1.031 & stable \\
+LP--RF & A\_V\_BLOK & 57 & 0.733 & 0.127 & 0.032 & 0.016 & 0.000 & 1.023 & stable \\
+LP--RF & OTEK\_LANC & 159 & 0.693 & 0.164 & 0.082 & 0.024 & 0.000 & 1.020 & stable \\
+LP--RF & RAZRIV & 54 & 0.834 & 0.149 & 0.030 & 0.024 & 0.000 & 1.022 & stable \\
+LP--RF & DRESSLER & 75 & 0.682 & 0.079 & 0.042 & 0.017 & 0.000 & 1.007 & stable \\
+LP--RF & ZSN & 394 & 0.726 & 0.512 & 0.156 & 0.047 & 0.182 & 1.009 & stable \\
+LP--RF & REC\_IM & 159 & 0.668 & 0.170 & 0.083 & 0.026 & 0.000 & 1.007 & stable \\
+LP--RF & P\_IM\_STEN & 148 & 0.681 & 0.182 & 0.077 & 0.034 & 0.000 & 0.985 & stable \\
+LP--RF & LET\_IS & 271 & 0.853 & 0.589 & 0.102 & 0.069 & 0.280 & 1.039 & stable \\
+RAkELd--RF & FIBR\_PREDS & 170 & 0.727 & 0.248 & 0.084 & 0.029 & 0.000 & 1.015 & stable \\
+RAkELd--RF & PREDS\_TAH & 20 & 0.528 & 0.076 & 0.011 & 0.007 & 0.000 & 1.018 & unstable \\
+RAkELd--RF & JELUD\_TAH & 42 & 0.746 & 0.079 & 0.024 & 0.009 & 0.000 & 1.029 & stable \\
+RAkELd--RF & FIBR\_JELUD & 71 & 0.691 & 0.133 & 0.039 & 0.018 & 0.000 & 1.032 & stable \\
+RAkELd--RF & A\_V\_BLOK & 57 & 0.739 & 0.160 & 0.031 & 0.012 & 0.000 & 1.025 & stable \\
+RAkELd--RF & OTEK\_LANC & 159 & 0.671 & 0.155 & 0.083 & 0.020 & 0.000 & 1.024 & stable \\
+RAkELd--RF & RAZRIV & 54 & 0.811 & 0.146 & 0.030 & 0.019 & 0.000 & 1.023 & stable \\
+RAkELd--RF & DRESSLER & 75 & 0.686 & 0.081 & 0.042 & 0.011 & 0.000 & 1.006 & stable \\
+RAkELd--RF & ZSN & 394 & 0.727 & 0.513 & 0.155 & 0.039 & 0.261 & 1.013 & stable \\
+RAkELd--RF & REC\_IM & 159 & 0.665 & 0.164 & 0.083 & 0.022 & 0.000 & 1.012 & stable \\
+RAkELd--RF & P\_IM\_STEN & 148 & 0.662 & 0.167 & 0.077 & 0.018 & 0.000 & 0.993 & stable \\
+RAkELd--RF & LET\_IS & 271 & 0.855 & 0.594 & 0.100 & 0.058 & 0.287 & 1.038 & stable \\
+Shared MLP & FIBR\_PREDS & 170 & 0.716 & 0.217 & 0.198 & 0.320 & 0.286 & 0.238 & stable \\
+Shared MLP & PREDS\_TAH & 20 & 0.493 & 0.013 & 0.105 & 0.255 & 0.019 & 0.044 & unstable \\
+Shared MLP & JELUD\_TAH & 42 & 0.737 & 0.064 & 0.116 & 0.236 & 0.121 & 0.095 & stable \\
+Shared MLP & FIBR\_JELUD & 71 & 0.676 & 0.095 & 0.175 & 0.331 & 0.145 & 0.112 & stable \\
+Shared MLP & A\_V\_BLOK & 57 & 0.757 & 0.139 & 0.128 & 0.259 & 0.185 & 0.115 & stable \\
+Shared MLP & OTEK\_LANC & 159 & 0.670 & 0.176 & 0.211 & 0.337 & 0.235 & 0.217 & stable \\
+Shared MLP & RAZRIV & 54 & 0.835 & 0.158 & 0.108 & 0.205 & 0.168 & 0.134 & stable \\
+Shared MLP & DRESSLER & 75 & 0.633 & 0.073 & 0.188 & 0.349 & 0.116 & 0.112 & stable \\
+Shared MLP & ZSN & 394 & 0.681 & 0.363 & 0.227 & 0.245 & 0.453 & 0.486 & stable \\
+Shared MLP & REC\_IM & 159 & 0.650 & 0.170 & 0.217 & 0.354 & 0.223 & 0.209 & stable \\
+Shared MLP & P\_IM\_STEN & 148 & 0.666 & 0.140 & 0.211 & 0.345 & 0.221 & 0.201 & stable \\
+Shared MLP & LET\_IS & 271 & 0.849 & 0.587 & 0.149 & 0.197 & 0.518 & 0.448 & stable \\
+Multitask DNN & FIBR\_PREDS & 170 & 0.710 & 0.209 & 0.195 & 0.307 & 0.287 & 0.245 & stable \\
+Multitask DNN & PREDS\_TAH & 20 & 0.456 & 0.012 & 0.107 & 0.266 & 0.011 & 0.042 & unstable \\
+Multitask DNN & JELUD\_TAH & 42 & 0.727 & 0.061 & 0.123 & 0.251 & 0.116 & 0.089 & stable \\
+Multitask DNN & FIBR\_JELUD & 71 & 0.676 & 0.087 & 0.171 & 0.319 & 0.145 & 0.116 & stable \\
+Multitask DNN & A\_V\_BLOK & 57 & 0.755 & 0.146 & 0.130 & 0.255 & 0.197 & 0.116 & stable \\
+Multitask DNN & OTEK\_LANC & 159 & 0.672 & 0.169 & 0.210 & 0.331 & 0.232 & 0.221 & stable \\
+Multitask DNN & RAZRIV & 54 & 0.827 & 0.152 & 0.108 & 0.195 & 0.176 & 0.140 & stable \\
+Multitask DNN & DRESSLER & 75 & 0.621 & 0.070 & 0.192 & 0.350 & 0.099 & 0.112 & stable \\
+Multitask DNN & ZSN & 394 & 0.697 & 0.378 & 0.219 & 0.231 & 0.457 & 0.501 & stable \\
+Multitask DNN & REC\_IM & 159 & 0.641 & 0.168 & 0.214 & 0.345 & 0.229 & 0.213 & stable \\
+Multitask DNN & P\_IM\_STEN & 148 & 0.670 & 0.142 & 0.210 & 0.334 & 0.224 & 0.207 & stable \\
+Multitask DNN & LET\_IS & 271 & 0.844 & 0.588 & 0.152 & 0.195 & 0.523 & 0.450 & stable \\
+TabPFN-3 & FIBR\_PREDS & 170 & 0.732 & 0.264 & 0.083 & 0.015 & 0.044 & 1.180 & stable \\
+TabPFN-3 & PREDS\_TAH & 20 & 0.409 & 0.073 & 0.011 & 0.007 & 0.000 & 1.404 & unstable \\
+TabPFN-3 & JELUD\_TAH & 42 & 0.753 & 0.072 & 0.024 & 0.009 & 0.000 & 1.396 & stable \\
+TabPFN-3 & FIBR\_JELUD & 71 & 0.672 & 0.088 & 0.039 & 0.015 & 0.000 & 1.362 & stable \\
+TabPFN-3 & A\_V\_BLOK & 57 & 0.794 & 0.172 & 0.030 & 0.010 & 0.000 & 1.298 & stable \\
+TabPFN-3 & OTEK\_LANC & 159 & 0.678 & 0.165 & 0.082 & 0.021 & 0.000 & 1.217 & stable \\
+TabPFN-3 & RAZRIV & 54 & 0.804 & 0.144 & 0.029 & 0.010 & 0.000 & 1.309 & stable \\
+TabPFN-3 & DRESSLER & 75 & 0.592 & 0.073 & 0.042 & 0.017 & 0.000 & 1.336 & stable \\
+TabPFN-3 & ZSN & 394 & 0.731 & 0.510 & 0.146 & 0.021 & 0.361 & 1.079 & stable \\
+TabPFN-3 & REC\_IM & 159 & 0.621 & 0.145 & 0.084 & 0.023 & 0.000 & 1.231 & stable \\
+TabPFN-3 & P\_IM\_STEN & 148 & 0.675 & 0.164 & 0.077 & 0.020 & 0.000 & 1.220 & stable \\
+TabPFN-3 & LET\_IS & 271 & 0.873 & 0.624 & 0.091 & 0.015 & 0.489 & 1.099 & stable \\
+LP--RF--TabPFN-3 (equal) & FIBR\_PREDS & 170 & 0.741 & 0.264 & 0.083 & 0.023 & 0.000 & 1.093 & stable \\
+LP--RF--TabPFN-3 (equal) & PREDS\_TAH & 20 & 0.499 & 0.086 & 0.011 & 0.007 & 0.000 & 1.182 & unstable \\
+LP--RF--TabPFN-3 (equal) & JELUD\_TAH & 42 & 0.774 & 0.079 & 0.024 & 0.010 & 0.000 & 1.191 & stable \\
+LP--RF--TabPFN-3 (equal) & FIBR\_JELUD & 71 & 0.701 & 0.107 & 0.039 & 0.015 & 0.000 & 1.173 & stable \\
+LP--RF--TabPFN-3 (equal) & A\_V\_BLOK & 57 & 0.788 & 0.175 & 0.031 & 0.013 & 0.000 & 1.144 & stable \\
+LP--RF--TabPFN-3 (equal) & OTEK\_LANC & 159 & 0.689 & 0.170 & 0.082 & 0.023 & 0.000 & 1.110 & stable \\
+LP--RF--TabPFN-3 (equal) & RAZRIV & 54 & 0.822 & 0.148 & 0.029 & 0.016 & 0.000 & 1.148 & stable \\
+LP--RF--TabPFN-3 (equal) & DRESSLER & 75 & 0.667 & 0.085 & 0.042 & 0.011 & 0.000 & 1.148 & stable \\
+LP--RF--TabPFN-3 (equal) & ZSN & 394 & 0.737 & 0.518 & 0.148 & 0.036 & 0.362 & 1.043 & stable \\
+LP--RF--TabPFN-3 (equal) & REC\_IM & 159 & 0.653 & 0.162 & 0.083 & 0.030 & 0.000 & 1.108 & stable \\
+LP--RF--TabPFN-3 (equal) & P\_IM\_STEN & 148 & 0.687 & 0.177 & 0.077 & 0.024 & 0.000 & 1.090 & stable \\
+LP--RF--TabPFN-3 (equal) & LET\_IS & 271 & 0.870 & 0.627 & 0.094 & 0.043 & 0.350 & 1.068 & stable \\
+LP--RF--TabPFN-3 (inner-OOF weighted) & FIBR\_PREDS & 170 & 0.741 & 0.264 & 0.083 & 0.022 & 0.000 & 1.094 & stable \\
+LP--RF--TabPFN-3 (inner-OOF weighted) & PREDS\_TAH & 20 & 0.500 & 0.086 & 0.011 & 0.007 & 0.000 & 1.177 & unstable \\
+LP--RF--TabPFN-3 (inner-OOF weighted) & JELUD\_TAH & 42 & 0.774 & 0.078 & 0.024 & 0.010 & 0.000 & 1.194 & stable \\
+LP--RF--TabPFN-3 (inner-OOF weighted) & FIBR\_JELUD & 71 & 0.700 & 0.107 & 0.039 & 0.014 & 0.000 & 1.171 & stable \\
+LP--RF--TabPFN-3 (inner-OOF weighted) & A\_V\_BLOK & 57 & 0.788 & 0.173 & 0.031 & 0.014 & 0.000 & 1.149 & stable \\
+LP--RF--TabPFN-3 (inner-OOF weighted) & OTEK\_LANC & 159 & 0.689 & 0.170 & 0.082 & 0.023 & 0.000 & 1.109 & stable \\
+LP--RF--TabPFN-3 (inner-OOF weighted) & RAZRIV & 54 & 0.823 & 0.149 & 0.029 & 0.016 & 0.000 & 1.147 & stable \\
+LP--RF--TabPFN-3 (inner-OOF weighted) & DRESSLER & 75 & 0.668 & 0.085 & 0.042 & 0.011 & 0.000 & 1.145 & stable \\
+LP--RF--TabPFN-3 (inner-OOF weighted) & ZSN & 394 & 0.737 & 0.518 & 0.148 & 0.036 & 0.362 & 1.043 & stable \\
+LP--RF--TabPFN-3 (inner-OOF weighted) & REC\_IM & 159 & 0.653 & 0.163 & 0.083 & 0.031 & 0.000 & 1.105 & stable \\
+LP--RF--TabPFN-3 (inner-OOF weighted) & P\_IM\_STEN & 148 & 0.687 & 0.177 & 0.077 & 0.023 & 0.000 & 1.089 & stable \\
+LP--RF--TabPFN-3 (inner-OOF weighted) & LET\_IS & 271 & 0.870 & 0.627 & 0.094 & 0.043 & 0.350 & 1.068 & stable \\
+\end{longtable}

@@ -1,0 +1,27 @@
+\begin{table*}[!t]
+\centering
+\caption{Primary per-label comparison: inner-OOF-weighted LP--RF--TabPFN-3 ensemble minus TabPFN-3. Intervals use 2,000 paired patient bootstraps; $q$ is Benjamini--Hochberg adjusted across 12 labels.}
+\label{tab:primary_labels_r1}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrlrrl}
+\toprule
+Label & Events & $\Delta$AUROC & 95\% CI & Test & BH $q$ & Stability \\
+\midrule
+AF & 170 & $0.0086$ & $-0.0011$--$0.0183$ & paired DeLong & $0.1365$ & stable \\
+SVT & 20 & $0.0908$ & $-0.0129$--$0.1974$ & paired permutation & $0.2996$ & unstable \\
+VT & 42 & $0.0204$ & $-0.0097$--$0.0515$ & paired DeLong & $0.2335$ & stable \\
+VF & 71 & $0.0286$ & $0.0091$--$0.0480$ & paired DeLong & $0.0143$ & stable \\
+AVB & 57 & $-0.0054$ & $-0.0254$--$0.0171$ & paired DeLong & $0.6084$ & stable \\
+PulEd & 159 & $0.0107$ & $0.0014$--$0.0207$ & paired DeLong & $0.0788$ & stable \\
+Rupt & 54 & $0.0190$ & $0.0003$--$0.0365$ & paired DeLong & $0.0788$ & stable \\
+Dress & 75 & $0.0763$ & $0.0396$--$0.1160$ & paired DeLong & $0.0006$ & stable \\
+CHF & 394 & $0.0056$ & $-0.0008$--$0.0121$ & paired DeLong & $0.1391$ & stable \\
+ReMI & 159 & $0.0320$ & $0.0182$--$0.0459$ & paired DeLong & $0.0001$ & stable \\
+PIA & 148 & $0.0119$ & $-0.0006$--$0.0250$ & paired DeLong & $0.1365$ & stable \\
+Leth & 271 & $-0.0030$ & $-0.0075$--$0.0014$ & paired DeLong & $0.2335$ & stable \\
+\bottomrule
+\end{tabular}
+}
+\end{table*}

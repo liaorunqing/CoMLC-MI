@@ -72,7 +72,7 @@ def test_weighted_rank_metrics_match_sklearn_for_unit_weights() -> None:
 def test_bootstrap_is_reproducible_and_paired() -> None:
     y = np.array([0, 1, 0, 1, 0, 1, 0, 1])
     predictions = {
-        "TabPFN v2": np.array([0.1, 0.8, 0.2, 0.7, 0.3, 0.9, 0.25, 0.65]),
+        "TabPFN-3": np.array([0.1, 0.8, 0.2, 0.7, 0.3, 0.9, 0.25, 0.65]),
         "Logistic regression": np.array([0.15, 0.75, 0.3, 0.6, 0.35, 0.85, 0.2, 0.7]),
     }
     first = summarize_with_bootstrap(y, predictions, n_boot=40, seed=42)
@@ -80,7 +80,7 @@ def test_bootstrap_is_reproducible_and_paired() -> None:
     pd.testing.assert_frame_equal(first[0], second[0])
     pd.testing.assert_frame_equal(first[1], second[1])
     assert first[1].shape[0] == 1
-    assert calibration_bins(predictions["TabPFN v2"]).shape == y.shape
+    assert calibration_bins(predictions["TabPFN-3"]).shape == y.shape
 
 
 def test_vectorized_bootstrap_metrics_match_scalar_metrics() -> None:

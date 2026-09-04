@@ -28,7 +28,7 @@ from tabpfn import TabPFNClassifier
 SEED = 42
 STRICT_FEATURES = ["age_years", "male", "prior_mi", "prior_hf"]
 ENDPOINTS = ("death_30d", "death_7d")
-MODEL_ORDER = ("TabPFN v2", "Logistic regression")
+MODEL_ORDER = ("TabPFN-3", "Logistic regression")
 
 
 @dataclass(frozen=True)
@@ -563,12 +563,12 @@ def run(
             "5-fold out-of-fold",
             data.source_y.to_numpy(dtype=int),
             np.ones(len(data.source_y), dtype=bool),
-            {"TabPFN v2": fitted["source_tabpfn"], "Logistic regression": fitted["source_logistic"]},
+            {"TabPFN-3": fitted["source_tabpfn"], "Logistic regression": fitted["source_logistic"]},
         )
     ]
     for endpoint in ENDPOINTS:
         outcome = data.external_endpoints[endpoint].to_numpy(dtype=int)
-        predictions = {"TabPFN v2": fitted["external_tabpfn"], "Logistic regression": fitted["external_logistic"]}
+        predictions = {"TabPFN-3": fitted["external_tabpfn"], "Logistic regression": fitted["external_logistic"]}
         analyses.extend(
             [
                 ("Hungarian AMI registry", endpoint, "all first events", outcome, np.ones(len(outcome), dtype=bool), predictions),

@@ -1,0 +1,14 @@
+{
+  "status": "complete",
+  "stage": "summarize",
+  "fold_shard_index": null,
+  "fold_shards": null,
+  "gcn_shard_index": null,
+  "gcn_shards": null,
+  "synthetic_shard_index": null,
+  "synthetic_shards": null,
+  "temporal_shard_index": null,
+  "temporal_shards": null,
+  "elapsed_seconds": 278.9032962322235,
+  "formal_command": "python -m src.run_benchmark --config configs/comlc_mi_benchmark.json"
+}

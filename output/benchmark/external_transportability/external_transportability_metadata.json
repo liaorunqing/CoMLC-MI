@@ -1,0 +1,28 @@
+{
+  "name": "cross-cohort mortality transportability stress test",
+  "scope": "Partial transportability analysis of mortality using a reduced common-feature model.",
+  "specification_timing": "Specification locked before external model fitting and evaluation.",
+  "source_endpoint": "In-hospital fatal outcome (LET_IS > 0).",
+  "external_primary_endpoint": "30-day all-cause mortality derived from admission and death dates.",
+  "external_sensitivity_endpoint": "7-day all-cause mortality.",
+  "features": [
+    "age_years",
+    "male",
+    "prior_mi",
+    "prior_hf"
+  ],
+  "independent_unit": "First AMI event selected by Event number = 1; Study ID was not used.",
+  "models": [
+    "TabPFN-3",
+    "Logistic regression"
+  ],
+  "source_cv_folds": 5,
+  "logistic_max_iter": 5000,
+  "tabpfn_n_estimators": 8,
+  "tabpfn_n_preprocessing_jobs": 1,
+  "bootstrap": "2000 ordinary patient-level paired multinomial bootstrap resamples.",
+  "seed": 42,
+  "runtime_seconds": 599.0318775177002,
+  "dataset_doi": "10.17632/2v7n2r3xch.1",
+  "associated_article_doi": "10.3390/ijerph23081010"
+}

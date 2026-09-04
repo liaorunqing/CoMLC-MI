@@ -1,0 +1,21 @@
+\begin{center}
+\captionof{table}{Source and external mortality calibration: estimate (95\% patient-bootstrap interval).}\label{tab:supp_external_calibration}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llllrrccc}
+\toprule
+Cohort & Endpoint & Subset & Model & $n$ & Events & Intercept & Slope & O:E \\
+\midrule
+Krasnoyarsk & in-hospital fatal outcome & 5-fold out-of-fold & TabPFN-3 & 1700 & 271 & $-$0.070 ($-$0.444--0.323) & 0.862 (0.656--1.096) & 1.137 (1.018--1.259) \\
+Krasnoyarsk & in-hospital fatal outcome & 5-fold out-of-fold & Logistic regression & 1700 & 271 & $-$0.104 ($-$0.453--0.241) & 0.930 (0.731--1.147) & 1.003 (0.899--1.111) \\
+Hungarian AMI registry & death\_30d & all first events & TabPFN-3 & 29596 & 3888 & $-$0.267 ($-$0.356--$-$0.184) & 1.014 (0.958--1.071) & 0.794 (0.772--0.817) \\
+Hungarian AMI registry & death\_30d & all first events & Logistic regression & 29596 & 3888 & $-$0.405 ($-$0.480--$-$0.334) & 1.042 (0.994--1.092) & 0.698 (0.679--0.718) \\
+Hungarian AMI registry & death\_30d & complete case & TabPFN-3 & 28477 & 3465 & $-$0.283 ($-$0.378--$-$0.185) & 1.066 (1.003--1.130) & 0.738 (0.716--0.760) \\
+Hungarian AMI registry & death\_30d & complete case & Logistic regression & 28477 & 3465 & $-$0.438 ($-$0.513--$-$0.360) & 1.088 (1.035--1.144) & 0.649 (0.630--0.668) \\
+Hungarian AMI registry & death\_7d & all first events & TabPFN-3 & 29596 & 2408 & $-$0.896 ($-$1.004--$-$0.792) & 0.963 (0.892--1.033) & 0.492 (0.474--0.510) \\
+Hungarian AMI registry & death\_7d & all first events & Logistic regression & 29596 & 2408 & $-$1.045 ($-$1.129--$-$0.964) & 0.981 (0.921--1.040) & 0.432 (0.416--0.448) \\
+Hungarian AMI registry & death\_7d & complete case & TabPFN-3 & 28477 & 2118 & $-$0.917 ($-$1.030--$-$0.799) & 1.019 (0.943--1.095) & 0.451 (0.433--0.470) \\
+Hungarian AMI registry & death\_7d & complete case & Logistic regression & 28477 & 2118 & $-$1.084 ($-$1.172--$-$0.992) & 1.029 (0.965--1.094) & 0.397 (0.381--0.414) \\
+\bottomrule
+\end{tabular}%
+}
+\end{center}

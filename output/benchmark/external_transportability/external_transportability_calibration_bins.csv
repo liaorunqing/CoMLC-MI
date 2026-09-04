@@ -1,0 +1,101 @@
+cohort,endpoint,subset,model,bin,n,events,mean_predicted,observed_rate
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,TabPFN-3,1,170,10,0.0251652111901956,0.0588235294117647
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,TabPFN-3,2,171,6,0.0537638539415702,0.0350877192982456
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,TabPFN-3,3,177,18,0.0755118343789698,0.1016949152542373
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,TabPFN-3,4,162,20,0.097164612263441,0.1234567901234567
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,TabPFN-3,5,170,21,0.1181590992299949,0.1235294117647058
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,TabPFN-3,6,170,29,0.1423591270166284,0.1705882352941176
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,TabPFN-3,7,170,38,0.1693482824108179,0.2235294117647059
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,TabPFN-3,8,170,37,0.1957673665355233,0.2176470588235294
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,TabPFN-3,9,170,41,0.2302768824731602,0.2411764705882353
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,TabPFN-3,10,170,51,0.2955414223320344,0.3
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,Logistic regression,1,171,9,0.0471492219234861,0.0526315789473684
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,Logistic regression,2,169,6,0.0737427300897856,0.0355029585798816
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,Logistic regression,3,170,16,0.0924108154573392,0.0941176470588235
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,Logistic regression,4,173,20,0.1108965535433689,0.1156069364161849
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,Logistic regression,5,167,30,0.1299875774818587,0.1796407185628742
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,Logistic regression,6,170,24,0.151011008687056,0.1411764705882353
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,Logistic regression,7,170,35,0.1770051240763233,0.2058823529411764
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,Logistic regression,8,171,41,0.2099257795222564,0.239766081871345
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,Logistic regression,9,169,39,0.2528752296446786,0.2307692307692307
+Krasnoyarsk,in-hospital fatal outcome,5-fold out-of-fold,Logistic regression,10,170,51,0.344350982333958,0.3
+Hungarian AMI registry,death_30d,all first events,TabPFN-3,1,2960,99,0.0330236628651618,0.0334459459459459
+Hungarian AMI registry,death_30d,all first events,TabPFN-3,2,2960,134,0.0632489249110221,0.0452702702702702
+Hungarian AMI registry,death_30d,all first events,TabPFN-3,3,2959,187,0.0918915718793869,0.0631970260223048
+Hungarian AMI registry,death_30d,all first events,TabPFN-3,4,2960,241,0.1176833659410476,0.0814189189189189
+Hungarian AMI registry,death_30d,all first events,TabPFN-3,5,2961,320,0.1417409628629684,0.1080715974332995
+Hungarian AMI registry,death_30d,all first events,TabPFN-3,6,2958,370,0.1689758449792862,0.1250845165652468
+Hungarian AMI registry,death_30d,all first events,TabPFN-3,7,2959,435,0.196830928325653,0.1470091247042919
+Hungarian AMI registry,death_30d,all first events,TabPFN-3,8,2961,556,0.229652851819992,0.187774400540358
+Hungarian AMI registry,death_30d,all first events,TabPFN-3,9,2958,700,0.2699350118637085,0.2366463826910074
+Hungarian AMI registry,death_30d,all first events,TabPFN-3,10,2960,846,0.3409609496593475,0.2858108108108108
+Hungarian AMI registry,death_30d,all first events,Logistic regression,1,2960,99,0.0536428413067937,0.0334459459459459
+Hungarian AMI registry,death_30d,all first events,Logistic regression,2,2960,131,0.0815191846299717,0.0442567567567567
+Hungarian AMI registry,death_30d,all first events,Logistic regression,3,2961,185,0.1061346013586336,0.0624788922661263
+Hungarian AMI registry,death_30d,all first events,Logistic regression,4,2959,242,0.1280063247084766,0.0817843866171003
+Hungarian AMI registry,death_30d,all first events,Logistic regression,5,2959,307,0.1516848288132885,0.1037512673200405
+Hungarian AMI registry,death_30d,all first events,Logistic regression,6,2959,355,0.17829809383481,0.1199729638391348
+Hungarian AMI registry,death_30d,all first events,Logistic regression,7,2959,418,0.2099204053607089,0.1412639405204461
+Hungarian AMI registry,death_30d,all first events,Logistic regression,8,2960,541,0.251016187498613,0.1827702702702702
+Hungarian AMI registry,death_30d,all first events,Logistic regression,9,2959,692,0.3060943912332839,0.2338627914836093
+Hungarian AMI registry,death_30d,all first events,Logistic regression,10,2960,918,0.4159153900738234,0.3101351351351351
+Hungarian AMI registry,death_30d,complete case,TabPFN-3,1,2848,81,0.0327061861753463,0.028441011235955
+Hungarian AMI registry,death_30d,complete case,TabPFN-3,2,2848,104,0.0626372024416923,0.0365168539325842
+Hungarian AMI registry,death_30d,complete case,TabPFN-3,3,2847,164,0.091110274195671,0.0576044959606603
+Hungarian AMI registry,death_30d,complete case,TabPFN-3,4,2850,206,0.1170270293951034,0.0722807017543859
+Hungarian AMI registry,death_30d,complete case,TabPFN-3,5,2846,265,0.1409711241722107,0.0931131412508784
+Hungarian AMI registry,death_30d,complete case,TabPFN-3,6,2847,336,0.1681683659553527,0.1180189673340358
+Hungarian AMI registry,death_30d,complete case,TabPFN-3,7,2848,390,0.1958813816308975,0.136938202247191
+Hungarian AMI registry,death_30d,complete case,TabPFN-3,8,2847,501,0.2289164662361145,0.1759747102212855
+Hungarian AMI registry,death_30d,complete case,TabPFN-3,9,2849,637,0.2693957984447479,0.2235872235872235
+Hungarian AMI registry,death_30d,complete case,TabPFN-3,10,2847,781,0.3420227169990539,0.2743238496663154
+Hungarian AMI registry,death_30d,complete case,Logistic regression,1,2848,81,0.0533402780304141,0.028441011235955
+Hungarian AMI registry,death_30d,complete case,Logistic regression,2,2848,100,0.0809857995807623,0.0351123595505618
+Hungarian AMI registry,death_30d,complete case,Logistic regression,3,2847,158,0.105518680645879,0.0554970144011239
+Hungarian AMI registry,death_30d,complete case,Logistic regression,4,2848,203,0.1273331560020525,0.0712780898876404
+Hungarian AMI registry,death_30d,complete case,Logistic regression,5,2848,271,0.1509162048410681,0.0951544943820224
+Hungarian AMI registry,death_30d,complete case,Logistic regression,6,2848,311,0.1773229731697927,0.1091994382022471
+Hungarian AMI registry,death_30d,complete case,Logistic regression,7,2847,376,0.2086791883266561,0.1320688443976115
+Hungarian AMI registry,death_30d,complete case,Logistic regression,8,2847,483,0.2498080048382326,0.1696522655426765
+Hungarian AMI registry,death_30d,complete case,Logistic regression,9,2848,635,0.3050100840978694,0.2229634831460674
+Hungarian AMI registry,death_30d,complete case,Logistic regression,10,2848,847,0.4156793850162091,0.2974016853932584
+Hungarian AMI registry,death_7d,all first events,TabPFN-3,1,2960,69,0.0330236628651618,0.0233108108108108
+Hungarian AMI registry,death_7d,all first events,TabPFN-3,2,2960,83,0.0632489249110221,0.0280405405405405
+Hungarian AMI registry,death_7d,all first events,TabPFN-3,3,2959,105,0.0918915718793869,0.0354849611355187
+Hungarian AMI registry,death_7d,all first events,TabPFN-3,4,2960,142,0.1176833659410476,0.0479729729729729
+Hungarian AMI registry,death_7d,all first events,TabPFN-3,5,2961,180,0.1417409628629684,0.060790273556231
+Hungarian AMI registry,death_7d,all first events,TabPFN-3,6,2958,231,0.1689758449792862,0.0780933062880324
+Hungarian AMI registry,death_7d,all first events,TabPFN-3,7,2959,256,0.196830928325653,0.0865157147685028
+Hungarian AMI registry,death_7d,all first events,TabPFN-3,8,2961,364,0.229652851819992,0.1229314420803782
+Hungarian AMI registry,death_7d,all first events,TabPFN-3,9,2958,462,0.2699350118637085,0.1561866125760649
+Hungarian AMI registry,death_7d,all first events,TabPFN-3,10,2960,516,0.3409609496593475,0.1743243243243243
+Hungarian AMI registry,death_7d,all first events,Logistic regression,1,2960,69,0.0536428413067937,0.0233108108108108
+Hungarian AMI registry,death_7d,all first events,Logistic regression,2,2960,81,0.0815191846299717,0.0273648648648648
+Hungarian AMI registry,death_7d,all first events,Logistic regression,3,2961,109,0.1061346013586336,0.0368118878757176
+Hungarian AMI registry,death_7d,all first events,Logistic regression,4,2959,142,0.1280063247084766,0.0479891855356539
+Hungarian AMI registry,death_7d,all first events,Logistic regression,5,2959,172,0.1516848288132885,0.0581277458600878
+Hungarian AMI registry,death_7d,all first events,Logistic regression,6,2959,212,0.17829809383481,0.0716458262926664
+Hungarian AMI registry,death_7d,all first events,Logistic regression,7,2959,266,0.2099204053607089,0.0898952348766475
+Hungarian AMI registry,death_7d,all first events,Logistic regression,8,2960,353,0.251016187498613,0.1192567567567567
+Hungarian AMI registry,death_7d,all first events,Logistic regression,9,2959,437,0.3060943912332839,0.1476850287259209
+Hungarian AMI registry,death_7d,all first events,Logistic regression,10,2960,567,0.4159153900738234,0.191554054054054
+Hungarian AMI registry,death_7d,complete case,TabPFN-3,1,2848,58,0.0327061861753463,0.0203651685393258
+Hungarian AMI registry,death_7d,complete case,TabPFN-3,2,2848,62,0.0626372024416923,0.0217696629213483
+Hungarian AMI registry,death_7d,complete case,TabPFN-3,3,2847,88,0.091110274195671,0.0309097295398665
+Hungarian AMI registry,death_7d,complete case,TabPFN-3,4,2850,121,0.1170270293951034,0.0424561403508771
+Hungarian AMI registry,death_7d,complete case,TabPFN-3,5,2846,148,0.1409711241722107,0.0520028109627547
+Hungarian AMI registry,death_7d,complete case,TabPFN-3,6,2847,205,0.1681683659553527,0.0720056199508254
+Hungarian AMI registry,death_7d,complete case,TabPFN-3,7,2848,224,0.1958813816308975,0.0786516853932584
+Hungarian AMI registry,death_7d,complete case,TabPFN-3,8,2847,325,0.2289164662361145,0.1141552511415525
+Hungarian AMI registry,death_7d,complete case,TabPFN-3,9,2849,416,0.2693957984447479,0.146016146016146
+Hungarian AMI registry,death_7d,complete case,TabPFN-3,10,2847,471,0.3420227169990539,0.1654373024236038
+Hungarian AMI registry,death_7d,complete case,Logistic regression,1,2848,58,0.0533402780304141,0.0203651685393258
+Hungarian AMI registry,death_7d,complete case,Logistic regression,2,2848,60,0.0809857995807623,0.021067415730337
+Hungarian AMI registry,death_7d,complete case,Logistic regression,3,2847,88,0.105518680645879,0.0309097295398665
+Hungarian AMI registry,death_7d,complete case,Logistic regression,4,2848,119,0.1273331560020525,0.0417837078651685
+Hungarian AMI registry,death_7d,complete case,Logistic regression,5,2848,151,0.1509162048410681,0.0530196629213483
+Hungarian AMI registry,death_7d,complete case,Logistic regression,6,2848,178,0.1773229731697927,0.0625
+Hungarian AMI registry,death_7d,complete case,Logistic regression,7,2847,237,0.2086791883266561,0.0832455216016859
+Hungarian AMI registry,death_7d,complete case,Logistic regression,8,2847,308,0.2498080048382326,0.1081840533895328
+Hungarian AMI registry,death_7d,complete case,Logistic regression,9,2848,402,0.3050100840978694,0.1411516853932584
+Hungarian AMI registry,death_7d,complete case,Logistic regression,10,2848,517,0.4156793850162091,0.1815308988764045
