@@ -161,6 +161,7 @@ def package(destination: Path) -> Path:
         ROOT / "revision" / "SUBMISSION_READINESS.md",
         ROOT / "output" / "pdf" / "gai_revised_highlighted_audit.json",
         ROOT / "output" / "privacy_audit.json",
+        ROOT / "output" / "github_release_audit.json",
         ROOT / "output" / "pdf_visual_qa.md",
         ROOT / "output" / "submission_qa.json",
     ]
