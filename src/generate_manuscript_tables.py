@@ -175,8 +175,8 @@ def write_primary_label_table(results_dir: Path, output_dir: Path) -> None:
         r"\begin{table*}[!t]", r"\centering",
         r"\caption{Primary per-label comparison: inner-OOF-weighted LP--RF--TabPFN-3 ensemble minus TabPFN-3. Intervals use 2,000 paired patient bootstraps; $q$ is Benjamini--Hochberg adjusted across 12 labels.}",
         r"\label{tab:primary_labels}", r"\scriptsize",
-        r"\setlength{\tabcolsep}{3pt}", r"\resizebox{\textwidth}{!}{%",
-        r"\begin{tabular}{lrrlrrl}", r"\toprule",
+        r"\setlength{\tabcolsep}{3pt}",
+        r"\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrlrrl@{}}", r"\toprule",
         r"Label & Events & $\Delta$AUROC & 95\% CI & Test & BH $q$ & Stability \\", r"\midrule",
     ]
     for row in tests.itertuples(index=False):
@@ -186,7 +186,7 @@ def write_primary_label_table(results_dir: Path, output_dir: Path) -> None:
             f"${interval_row.ci_low:.4f}$--${interval_row.ci_high:.4f}$ & {_escape(row.test)} & "
             f"${row.p_value_bh:.4f}$ & {_escape(row.stability)} \\\\"
         )
-    lines.extend([r"\bottomrule", r"\end{tabular}", r"}", r"\end{table*}"])
+    lines.extend([r"\bottomrule", r"\end{tabular*}", r"\end{table*}"])
     (output_dir / "table_primary_labels.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

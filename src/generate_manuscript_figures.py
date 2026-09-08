@@ -152,7 +152,16 @@ def workflow_figure(output_dir: Path) -> None:
     _box(ax, 0.74, 0.31, 0.22, 0.11, "Each patient receives\none OOF prediction\nper repeat", COLORS["light_blue"])
     _box(ax, 0.43, 0.31, 0.22, 0.11, "Average five OOF\npredictions per patient", COLORS["light_blue"])
     _box(ax, 0.10, 0.31, 0.22, 0.11, "Paired patient bootstrap,\nDeLong/permutation, BH,\ncalibration intervals", COLORS["light_blue"])
-    _arrow(ax, (0.92, 0.815), (0.85, 0.42), connectionstyle="arc3,rad=0.34")
+    # Route the held-out-test connection outside the refit box.  The previous
+    # curved edge crossed the refit text and obscured the data-use boundary.
+    ax.plot(
+        [0.92, 0.965, 0.965],
+        [0.815, 0.70, 0.445],
+        color=COLORS["navy"],
+        linewidth=0.9,
+        solid_capstyle="round",
+    )
+    _arrow(ax, (0.965, 0.445), (0.94, 0.42), connectionstyle="arc3,rad=0")
     _arrow(ax, (0.74, 0.365), (0.65, 0.365))
     _arrow(ax, (0.43, 0.365), (0.32, 0.365))
     ax.text(
