@@ -457,6 +457,13 @@ def summarize_internal(config: dict, output_dir: Path) -> None:
         "TabPFN",
         point_estimates=point_estimates,
     ).to_csv(output_dir / "primary_paired_difference.csv", index=False)
+    paired_metric_difference(
+        bootstrap_arrays,
+        metric_names,
+        ENSEMBLE_WEIGHTED,
+        "LP-RF",
+        point_estimates=point_estimates,
+    ).to_csv(output_dir / "secondary_paired_difference_lp_rf.csv", index=False)
     np.savez_compressed(
         output_dir / "internal_bootstrap_arrays.npz",
         **{_slug(name): value for name, value in bootstrap_arrays.items()},

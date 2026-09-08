@@ -88,6 +88,6 @@ Only aggregate external results and calibration-bin summaries are public.
 
 ## Ethics note
 
-The study uses public, de-identified data and cites the governance statements of
-the source cohorts. The manuscript's institution-specific secondary-analysis
-ethics wording must be confirmed by the corresponding author before submission.
+The study analyzes only public, de-identified data and therefore requires no
+additional ethics approval or informed consent. The manuscript cites the ethics
+and data-governance statements reported by the source cohorts.

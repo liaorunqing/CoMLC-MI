@@ -449,7 +449,7 @@ def temporal_figure(results_dir: Path, output_dir: Path) -> None:
         2,
         1,
         figsize=(3.45, 5.95),
-        gridspec_kw={"height_ratios": [3.25, 1.35], "hspace": 0.48},
+        gridspec_kw={"height_ratios": [3.25, 1.35], "hspace": 0.58},
     )
     image = ax_heat.imshow(pivot.to_numpy(), aspect="auto", cmap="YlGnBu", vmin=0.5, vmax=0.9)
     ax_heat.set_xticks(np.arange(4), pivot.columns)
@@ -462,12 +462,27 @@ def temporal_figure(results_dir: Path, output_dir: Path) -> None:
     colorbar = fig.colorbar(image, ax=ax_heat, fraction=0.045, pad=0.03)
     colorbar.set_label("AUROC")
     ax_line.plot(metrics["horizon"], metrics["macro_auroc"], marker="o", color=COLORS["teal"], lw=1.7)
+    annotation_offsets = {
+        "Admission": (0, 7),
+        "24 h": (0, 7),
+        "48 h": (0, -18),
+        "72 h": (0, 7),
+    }
     for x, y, count in zip(metrics["horizon"], metrics["macro_auroc"], metrics["feature_count"]):
-        ax_line.annotate(f"{y:.3f}\n({count} features)", (x, y), xytext=(0, 7), textcoords="offset points", ha="center", fontsize=6)
+        dx, dy = annotation_offsets[str(x)]
+        ax_line.annotate(
+            f"{y:.3f}\n({count} features)",
+            (x, y),
+            xytext=(dx, dy),
+            textcoords="offset points",
+            ha="center",
+            va="top" if dy < 0 else "bottom",
+            fontsize=6,
+        )
     ax_line.set_ylabel("Macro-AUROC")
-    ax_line.set_title("b  Accumulated-information sensitivity", loc="left", fontweight="bold")
+    ax_line.set_title("b  Accumulated-information sensitivity", loc="left", fontweight="bold", pad=8)
     values = metrics["macro_auroc"].to_numpy()
-    ax_line.set_ylim(values.min() - 0.0010, values.max() + 0.0015)
+    ax_line.set_ylim(values.min() - 0.0010, values.max() + 0.0023)
     ax_line.tick_params(axis="x", labelrotation=18)
     ax_line.margins(x=0.10)
     ax_line.grid(color="#E5E7EB", lw=0.6)

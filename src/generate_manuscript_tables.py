@@ -240,6 +240,7 @@ def write_manuscript_facts(results_dir: Path, output_dir: Path) -> None:
     metrics = pd.read_csv(results_dir / "internal_model_metrics.csv").set_index("model")
     bootstrap = pd.read_csv(results_dir / "internal_bootstrap_summary.csv")
     primary = pd.read_csv(results_dir / "primary_paired_difference.csv").set_index("metric")
+    secondary = pd.read_csv(results_dir / "secondary_paired_difference_lp_rf.csv").set_index("metric")
     tests = pd.read_csv(results_dir / "primary_per_label_tests.csv")
     best_single_name = metrics.loc[MODEL_NAMES, "macro_auroc"].idxmax()
     best_all_name = metrics["macro_auroc"].idxmax()
@@ -273,6 +274,15 @@ def write_manuscript_facts(results_dir: Path, output_dir: Path) -> None:
                     "ci_high": float(row.ci_high),
                 }
                 for metric, row in primary.iterrows()
+            },
+            "secondary_difference_vs_lp_rf": {
+                metric: {
+                    "estimate": float(row.estimate),
+                    "bootstrap_mean": float(row.mean_bootstrap_difference),
+                    "ci_low": float(row.ci_low),
+                    "ci_high": float(row.ci_high),
+                }
+                for metric, row in secondary.iterrows()
             },
             "bh_significant_labels": int(tests["reject_bh_0_05"].sum()),
             "bootstrap_rows": int(len(bootstrap)),

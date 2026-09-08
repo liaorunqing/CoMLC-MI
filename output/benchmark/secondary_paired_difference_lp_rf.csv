@@ -1,0 +1,7 @@
+contrast,metric,estimate,mean_bootstrap_difference,ci_low,ci_high,interval_scope
+Ensemble-LP-RF-TabPFN-Weighted - LP-RF,macro_auroc,0.005330686001638774,0.005412133570858939,-0.0013491715297868773,0.012423904068239176,conditional on saved mean repeated-OOF predictions; no model refitting
+Ensemble-LP-RF-TabPFN-Weighted - LP-RF,micro_auroc,0.012468839979489776,0.012490978402216992,0.009257918688231382,0.015756741679338594,conditional on saved mean repeated-OOF predictions; no model refitting
+Ensemble-LP-RF-TabPFN-Weighted - LP-RF,macro_auprc,0.011938866257230285,0.013432754648678269,0.0018405659216792103,0.02650729153151988,conditional on saved mean repeated-OOF predictions; no model refitting
+Ensemble-LP-RF-TabPFN-Weighted - LP-RF,brier,-0.001685582776978417,-0.0016862896342578124,-0.0019809649096375853,-0.0013831624748112778,conditional on saved mean repeated-OOF predictions; no model refitting
+Ensemble-LP-RF-TabPFN-Weighted - LP-RF,ece_10,-0.006027824957665826,-0.005710467275054505,-0.00836678783445737,-0.003087304147815149,conditional on saved mean repeated-OOF predictions; no model refitting
+Ensemble-LP-RF-TabPFN-Weighted - LP-RF,macro_f1_0_5,0.02078509063478877,0.02087066315620365,0.01604360657716722,0.02589078519775607,conditional on saved mean repeated-OOF predictions; no model refitting
