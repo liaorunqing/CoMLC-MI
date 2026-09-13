@@ -85,9 +85,3 @@ analysis.
 This repository does not distribute the Hungarian workbook, patient-level
 Hungarian predictions, external bootstrap arrays, or licensed TabPFN-3 weights.
 Only aggregate external results and calibration-bin summaries are public.
-
-## Ethics note
-
-The study analyzes only public, de-identified data and therefore requires no
-additional ethics approval or informed consent. The manuscript cites the ethics
-and data-governance statements reported by the source cohorts.
